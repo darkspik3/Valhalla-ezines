@@ -1,0 +1,150 @@
+                              GPGPU using OpenGL
+                              roy g biv / defjam
+
+                                 -= defjam =-
+                                  since 1992
+                     bringing you the viruses of tomorrow
+                                    today!
+
+
+About the author:
+
+Former  DOS/Win16  virus writer, author of several virus  families,  including
+Ginger  (see Coderz #1 zine for terrible buggy example, contact me for  better
+sources  ;),  and Virus Bulletin 9/95 for a description of what   they  called
+Rainbow.   Co-author  of  world's first virus using circular  partition  trick
+(Orsam, coded with Prototype in 1993).  Designer of world's first XMS swapping
+virus  (John Galt, coded by RT Fishel in 1995, only 30 bytes stub, the rest is
+swapped  out).   Author of world's first virus using Thread Local Storage  for
+replication  (Shrug, see Virus Bulletin 6/02 for a description, but they  call
+it Chiton), world's first virus using Visual Basic 5/6 language extensions for
+replication  (OU812), world's first Native executable virus (Chthon),  world's
+first  virus  using process co-operation to prevent termination  (Gemini,  see
+Virus  Bulletin 9/02 for a description), world's first virus using polymorphic
+SMTP  headers (JunkMail, see Virus Bulletin 11/02 for a description),  world's
+first viruses that can convert any data files to infectable objects (Pretext),
+world's  first  32/64-bit  parasitic  EPO .NET  virus  (Croissant,  see  Virus
+Bulletin  11/04  for a description, but they call it Impanate), world's  first
+virus  using  self-executing HTML (JunkHTMaiL, see Virus Bulletin 7/03  for  a
+description), world's first virus for Win64 on Intel Itanium (Shrug, see Virus
+Bulletin 6/04 for a description, but they call it Rugrat), world's first virus
+for  Win64 on AMD AMD64 (Shrug), world's first cross-infecting virus for Intel
+IA32  and  AMD  AMD64  (Shrug),  world's  first  viruses  that  infect  Office
+applications  and  script  files  using the same  code  (Macaroni,  see  Virus
+Bulletin  11/05  for  a description, but they call it Macar),  world's   first
+viruses  that  can infect both VBS and JScript using the same code (ACDC,  see
+Virus  Bulletin 11/05 for a description, but they call it Cada), world's first
+virus  that  can  infect  CHM files (Charm, see Virus  Bulletin  10/06  for  a
+description,  but they call it Chamb), world's first IDA plugin virus  (Hidan,
+see Virus Bulletin 3/07 for a description), world's first viruses that use the
+Microsoft  Script  Encoder  to dynamically encrypt the  virus  body  (Screed),
+world's  first virus for StarOffice and OpenOffice (Starbucks), world's  first
+virus  IDC  virus (ID10TiC), world's first polymorphic virus for Win64 on  AMD
+AMD64  (Boundary, see Virus Bulletin 12/06 for a description, but they call it
+Bounds),  world's first virus that can infect Intel-format and  PowerPC-format
+Mach-O  files  (MachoMan,  see  Virus Bulletin 1/07  for  a  description,  but
+they  call  it  Macarena), world's first virus that uses  Unicode  escapes  to
+dynamically  encrypt  the virus body (Unicycle), world's first  self-executing
+PIF  (Spiffy), world's first self-executing LNK (WeakLNK), world's first virus
+that uses virtual code (Relock, see Virus Bulletin 3/10 for a description, but
+they  call  it  Lerock),  world's first virus to  use  FSAVE  for  instruction
+reordering (Mimix, see Virus Bulletin 1/10 for a description, but they call it
+Fooper), world's first virus for ODbgScript (Volly), world's first Hiew plugin
+virus  (Hiewg),  world's first virus that uses fake BOMs (Bombastic),  world's
+first  virus  that  uses JScript prototypes to run itself  (Protato),  world's
+first  virus  that  uses  Heaven's Gate for  replication  (Heaven,  see  Virus
+Bulletin  12/11  for a description, but they call it Sobelow),  world's  first
+virus for 010 Editor script (To_Be), and world's first truly polymorphic Batch
+virus  (Polymer,  see Virus Bulletin 5/12 for a description, but they call  it
+Lymer).  Author of various retrovirus articles (eg see Vlad #7 for the strings
+that  make  your  code invisible to TBScan).  This is my ninteenth  virus  for
+Win32.  It is the world's first virus that uses the GPU for decryption.
+
+
+What is it?
+
+This  is a project which I started in 2007.  At that time, I had only ATI card
+which  did  not support fragment programs, and High Level Shader Language  did
+not even exist.  I did not make good progress from then until now, but finally
+in  2012, I spent one day to write most of the code.  Many things have changed
+since I started, but ATI cards are still not good. ;)
+
+GPGPU  stands  for General Purpose Graphics Processing Unit.  It means  to  do
+non-video  calculations  using  the video card hardware.  We want to  do  that
+because  video card hardware runs very fast and operations can be done in  the
+background.  It is also super anti-emulation environment.
+
+
+How can we do that?
+
+Video  card  supports memory blocks called textures.  Textures are just  array
+of  32-bit  floating-point values.  For some cards, textures must  be  squares
+(number of elements must have integer square root).  Some cards allow array to
+be  any size.  We can allocate several textures and work with them at the same
+time.
+
+It is common to allocate two or even more textures, with one or more for input
+values  and  one for output values.   We  can perform operations  (by  running
+shader  program)  on the input texture(s) and result will be stored in  output
+texture.  We can run more than one shader program on the textures, by swapping
+input and output textures.  This is called "ping-pong" technique.
+
+Shader programs are written in high-level language that looks like C.
+
+
+Set up environment
+
+To  use  shader program, we must create a window, and then set a pixel  format
+that  says to use OpenGL.  Window does not have to be visible at any time, and
+can be almost any class.  We create a context for OpenGL and make it current.
+
+Even  we  don't  care about the window, we must still behave like we  do.   We
+create a framebuffer object and bind it to our context.  We set a viewport for
+the  texture  mapping.  Viewport must be size of our texture,  otherwise  some
+values will be clipped and lost.
+
+We  create some textures, and set the environment mode for the textures.   Now
+we are ready for our shader program.
+
+
+Shader program
+
+We  create  one or more shader programs, and bind one of them to a shader  for
+immediate use.  We bind some shader source to the shader, and then compile and
+link the shader program.  If our shader program has variables, then we need to
+query  the location of each of them, and pass the returned values as the index
+when setting the variables.  We need to attach the textures to the framebuffer
+and enable the shader program.
+
+
+Variables
+
+To  use  textures requires to set a variable with the id of the  texture.   We
+activate  the  texture  to use, bind the id to the texture, and then  use  the
+variable  index  when  setting the texture id.  We can set  values  for  other
+variables by using the variable index, too.
+
+
+Run it!
+
+Finally, it's time to run the shader program.  We use the texture size so that
+the operation occurs over the whole array, by passing the co-ordinates of each
+corner.
+
+After  the  rendering  is complete, we must read back the result.   Since  the
+values  are floating-point, we might need to convert them back to integers, if
+we want to use the result for running code.
+
+I  can't  understand why the whole thing seems so complicated, but  I  suppose
+that people did not have this idea in mind when they designed the system. ;)
+
+
+Greets to friendly people (A-Z):
+
+Active - Benny - herm1t - hh86 - jqwerty - Malum - Obleak - Prototype -
+Ratter - Ronin - RT Fishel - sars - SPTH - The Gingerbread Man - Ultras -
+uNdErX - Vallez - Vecna - Whitehead
+
+
+rgb/defjam jun 2012
+iam_rgb@hotmail.com
