@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>SYP.01: Bypassing Online Dynamic Analysis Systems by M0SA</title>
+</head>
+<body>
+<center>
+<h1>SYP.01: Bypassing Online Dynamic Analysis Systems</h1>
+<em>"Life is really simple, but we insist on making it complicated." ? Confucius</em>
+</center>
+<h3>Introduction</h3>
+<p>SYP (Simple Yet Powerful) is a series that introduces in each episode a very simple technique to achieve a powerful impact goal. In this article, I'll discuss bypassing online dynamic analysis systems.</p>
+<p>Recently, we saw a surge in behavioral analysis tools online. Instead of having the old Anubis and CWSandbox that we all know, now we have a lot more. I didn't imagine how more until I saw the list made by Noteworthy [1], and I couldn't believe that we have that number now! Unlike the conventional AVs that we all used to that depends on signature scanning, emulation, X-Ray and all other sophisticated techniques mentioned in the awesome chapter 11 of Peter Szor's great book [2], behavior analysis system is relatively easier to implement. In this article, I'll show what types of dynamic analysis systems out there, and describe how to deceive those systems and show a fake behavior.</p>
+<h3>Run Run Run</h3>
+<p>So a dynamic analysis or a behavioral analysis is basically another method opposite to static analysis. In static analysis, AV doesn't actually run the malware on the system. Instead, it uses techniques like signature scanning and emulation to determine if the program under testing is a malware or not. On the contrary, due to the long list of limitations of static analysis methods and the high level of sophistication it has gotten to, dynamic analysis was proposed. In dynamic analysis, you actually run the program and monitor its behavior. So you don't have to think about anti-emulation, metamorphism or encryption, etc. So when dynamic analysis was proposed, AVers got over all anti-analysis techniques .. or that's what they thought. </p>
+<h3>The Tale of Two Cities</h3>
+<p>There are two types of dynamic analysis systems. Virtual machine based and hook based, and of course you have systems that combine both. In VM-based, the system starts a clean virtual machine, runs the malware, stop it after a specific time slot, compare the VM with the clean one and determine what the malware has done in the system.</p>
+<p>The other type is hook-based dynamic analysis system. In which the system runs the malware (whether on a VM or bare-metal machine), after specific period of time it stops the malware. The system hooks to the major and most popular APIs and that's how the system obtains information about the behavior of the malware under test. </p>
+<h3>Fake behavior for fake machines</h3>
+<p>So here are some ideas that you can find online about bypassing VM-based systems:</p>
+<ul>
+  <li><u>Delayed execution</u>: as long as the VM runs the code for specific time period, delay the behavior to pass the time.
+  <ul><li>Disadvantage: it will be delayed also when it runs for real, and then it would be obvious that the host file doesn't act normally.</li></ul></li>
+  <li><u>Detect the presence of VM</u>: A lot of technique has been published about that.
+  <ul><li>Disadvantage: AVers have gotten to a good level of hiding the features of a VM. Also, the obvious VM feature in a system might not be detected in the other.</li></ul></li>
+</ul>
+<p>So the idea is, since those systems start the VM and run the malware, then the machine won't be running for long before it runs the malware, especially it's an online service that serves a lot of clients. If we determine for how long the machine has been running before it executes our program, then we can know if it's an automated system that runs our malware or not.</p>
+<p>I tried GetTickCount on various online tools, and I found on some of them the program runs before 4 minutes of the machine start. On other systems, it's 6 minutes. But definitely all system gave me less than 10 minutes. With just those 3 lines in figure 1, I was able to bypass Anubis.</p>
+<pre>
+        CALL GetTickCount
+        CMP  EAX, 927C0H ; 600000 MILLISECONDS = 10 MINUTES
+        JB   Fake_Behavior
+</pre>
+<center><small>Figure 1. Call to GetTickCount</small></center>
+<p>With those three lines in figure 1, I was able to bypass Anubis and show a fake behavior instead.</p>
+<p>Q: What about if the program was set to run on startup, in this case it will always show fake behavior even on a real machine ?</p>
+<p>A: At the first moment the program got into the machine, before it even set the registry entry or whatever other method used to run it on startup, it has to run this check code first. The very first run of the program is not at the startup anyway. There has to be a process of infection that the system undergoes through.</p>
+<h3>I see the hook</h3>
+<p>The other method of hooking used in CWSandbox. It's also very simple to detect the hook of an API. Before you call the API, read the first few bytes in its address. If it's a control flow instruction, then definitely the API is hooked and you should show a fake behavior. Else, you're good to go.</p>
+<pre>
+        MOV	EBX, DWORD PTR [EBP+AGetProcAddress]
+        MOV AL, BYTE PTR [EBX]
+        CMP AL, 0E9H             ; JMP
+        JE	FAKE_BEHAVIOR
+        CMP AL, 0FFH             ; JMP/CALL
+        JE 	FAKE_BEHAVIOR
+        CMP AL, 0E8H             ; CALL
+        JE	FAKE_BEHAVIOR	
+        CMP	AL, 68H              ; PUSH+RET
+        JE	IS_FOLLOWED_BY_RET
+        JMP NO_HOOK
+    IS_FOLLOWED_BY_RET:
+        MOV AL, BYTE PTR [EBX+5]
+        CMP AL, 0C3H             ; RET
+        JE	FAKE_BEHAVIOR
+    		
+    NO_HOOK:
+
+</pre>
+<center><small>Figure 2. Looking for hooks</small></center>
+<h3>Testing</h3>
+<p>As a proof of concept, I choose one of the most infamous malware out there, Zeus bot, to test the technique. I patched Zeus using a tool I developed that makes the program runs the aforementioned checks before it runs. If the behavioral analysis tool is detected, it shows a fake behavior which is just a message box and terminates the program. It worth to mentioned that of course when you develop your own virus, you want to have a "convincing" fake behavior, so when the human analyst sees the report doesn't stop there.</p>
+<p>For each of the following tool, I have submitted two files, unpatched Zeus bot and the patched one. The patched Zeus will run normally with all the behavior of Zeus only on real machines, while on those systems it will display the message box and exit. The following table shows links to report of before and after patching.</p>
+<h3>Result</h3>
+<table border="1">
+  <tr>
+    <td>Comodo</td>
+    <td>
+        <a href="http://camas.comodo.com/cgi-bin/submit?file=4912ff2eba8056c5b1f21f4cec166cb5d6a77676cb79cfcc93100c9dc17549a0">before</a>, <a href="http://camas.comodo.com/cgi-bin/submit?file=4bc4daaad8f4e6ab73db1e5ad9114b589dcb7230001dab05eb1bd97953876df8">after</a>
+    </td>
+  </tr>
+  <tr>
+    <td>ThreatExpert</td>
+    <td>
+        <a href="http://www.threatexpert.com/report.aspx?md5=827f72f4a72275fe8850b735ec9a89ba">before</a>, <a href="http://www.threatexpert.com/report.aspx?md5=8728be402ed44868d23a4c2e450dda21">after</a>
+    </td>
+  </tr>
+  <tr>
+    <td>CWSandbox</td>
+    <td>
+        <a href="http://mwanalysis.org/?site=1&amp;page=details&amp;mode=view&amp;id=1047271&amp;password=keyrqrnnsz">before</a>, <a href="http://mwanalysis.org/?site=1&amp;page=details&amp;mode=view&amp;id=1047317&amp;password=arguzrbikg">after</a>
+    </td>
+  </tr>
+  <tr>
+    <td>Anubis</td>
+    <td>
+        <a href="http://anubis.iseclab.org/?action=result&amp;task_id=198d118d5643fe1047565e6c3d2c35309">before</a>, <a href="http://anubis.iseclab.org/?action=result&amp;task_id=14e5417f465cddfd41531df5caab3e9b0">after</a>
+    </td>
+  </tr>
+  <tr>
+    <td>Malwr</td>
+    <td>
+        <a href="https://malwr.com/analysis/MGJmMDM1YjU2ZjYxNDRlOGFmYWZiYTI4M2M1MGIzMWE/">before</a>, <a href="https://malwr.com/analysis/NzYzMjE4ZDkzNmNhNDRiOWEzZjIwZTJmNmU3OTRhODc/">after</a>
+    </td>
+  </tr>
+</table>
+<h3>Conclusion</h3>
+<p>So it was obvious the all the aforementioned systems were bypassed. The fact that many analysts rely on these systems to have an insight about the behavior of a program is scary ... for them of course. I would like to add that yesterday (at the time of writing) I found out that Joe Sandbox, which I never heard of before, does see the full behavior and produces an amazing report!. I didn't have the time to study it, but I guess bypassing it would soon be presented in episode two :-)</p>
+<p>Last but not least, Greetings to hh86 (the best editor in the world), SPTH (I wouldn't be writing here hadn't I known him) and herm1t (for maintaining the heaven of vxers), Qark and Quantum (for writing the one tutorial that changed my life).<p>
+
+<p>M0SA</p>
+<div>
+Nov. 1st 2013<br>
+Twitter: <a href="https://twitter.com/m0sa_">@m0sa_</a> <br>
+Email: m0sa.vx@gmail.com
+</div>
+
+<h3>References</h3>
+<p>[1] Noteworthy, <a href="http://vxheaven.org/forum/viewtopic.php?id=2404">"Online Sandbox Services", Vxheaven forum</a></p>
+<p>[2] Peter Szor, "The Art of Computer Virus Research and Defense", Addison-Wesley, 2005.</p>
+</body>
+</html>
