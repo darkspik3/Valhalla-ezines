@@ -1,0 +1,244 @@
+x-> Emulation: Transposition of Control (From Anti-Virus to Virus) <-x
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Released:    15 March 2012                                                    x
+Zine:        Valhalla #2                                                      x
+Author:      m0s6581/EOF                                                      x
+Source:      win32.evenstar (released in Valhalla #2)                         x
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+“If I read as many books as most men do, 
+I would be as dull-witted as they are.”
+- Thomas Hobbes, Leviathan
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Contents:
+
+I 	Synopsis
+II 	Structure of the emulator
+III Self-referencing 
+IV	Intercommunication
+V	Limitations
+VI	Afterthoughts
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+[+] Synopsis [+]
+
+In the last few years, sandboxing and emulation have become vital for anti-
+virus detection mechanisms. By a rather shaky definition, emulation is 
+composed of two different execution environments, one of which has a control
+over the other. AV emulators generally have two separated CPUs and thread 
+contexts, despite running on only one thread.
+
+It is possible to harness the power of emulation for the purpose of securing
+a virus payload (or body) code. Emulation can also be used to increase the 
+complexity of reverse engineering (especially debugging). An obvious red flag
+would be common decryption loops: once control is passed to the payload, it 
+becomes easier for the AV to perform analysis on the decrypted image. Hence, 
+it also becomes possible to reduce heuristic analysis through the use of an 
+emulator.
+
+win32.evenstar utilizes a prototype x86 pseudo-emulator. The virus body is 
+encrypted instruction by instruction using a basic xor algorithm, although it 
+is certainly possible to install a more sophisticated encryption scheme. This 
+is a basic layout of a PE infected by evenstar:
+
+[headers][section n][last seg + virus]
+
+The last segment is expanded to store both the emulator and the virus body:
+
+[original data][padding][emulator][body]
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+
+[+] Structure [+]
+
+The evenstar dropper utilizes mlde32 to produce a table of opcode lengths, that
+is later used by the encrypter and emulator. An instruction is copied from the 
+encrypted execution buffer to a temporary buffer where it is decrypted and 
+analyzed. Any ip-manipulating instructions are not executed directly, instead 
+only the eip of the debuggee is changed. Any other instruction is executed, 
+followed by an exception. Here is a depiction of the emulation algorithm:
+
+(Get Instruction) -> (Decrypt Instruction)
+                             v
+                        (Analysis)
+   (Regular Instruction)<-        -> (eip-manipulation)
+     -> (Proper Execution)            -> (Call/ret)
+     -> (Access Violation)            -> ([non]conditional jmp)
+	 
+The decrypted and isolated execution buffer looks something like this:
+
+0x10000	lea eax, DWORD PTR ds:[edx + 05f6h]
+0x10005	e8 00 00 00 00	; call delta
+0x10009 int 3
+0x1000A jmp [invalid]
+
+The first instruction was copied directly from the encrypted payload to this 
+buffer. It will be executed in the context of the debuggee. The second 
+instruction is a simple delta, used for an internal purpose of the emulator. 
+Lastly, the 0xcc, interrupt vector 3 instruction is caught by the SEH, to 
+ensure proper execution of the instruction.
+
+Just a side note: If it is required to install a custom SEH routine, then just 
+be aware that if a binary is compiled with /safeseh, it will execute only the
+specific exception handlers written in the Load Config Directory of the PE
+header. Zero'ing this table will disable SafeSEH and the OS will call your
+handler.
+	 
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	 
+	 
+	 
+
+[+] Self-referencing [+]
+
+An obviously vital component in any virus is the ability to replicate. As such,
+the virus must be able to copy its own body to another buffer. The scheme in 
+evenstar complicates this problem because nothing in the payload is decrypted 
+at one particular time, and the current execution instruction is in another 
+buffer. Therefore, a mechanism must exist that will allow for the virus body 
+to modify or read its own code, despite the encryption.
+
+The evenstar emulator first copies an instruction to the execution buffer 
+(where the instruction is physically executed - isolated from the entire 
+encrypted payload) and then sets a NO_ACCESS permission using VirtualProtect 
+on the execution page (where the payload is).
+
+Let us assume that this is the encrypted payload code:
+
+									; Offset			; Length
+	nop								; 0				; 1
+	call	delta							; 1				; 5
+delta:
+	nop								; 6				; 1
+	pop		ebx						; 7				; 1	
+; ebx now contains the address 0x6 [nop]
+
+	mov		BYTE PTR al, [ebx]		; 8	
+; Exception occurs at eip 0x8. Access Violation at address 0x6.
+
+ebx contains the address within the encrypted buffer, because the emulator 
+injects a return address into the debuggee stack (remember that call/ret is 
+emulated). Once an 8 bit read operation is attempted at the address 
+referenced by ebx, an Access Violation exception is generated because of the 
+prior NO_ACCESS set on that page.
+
+The SEH routine installed by the emulator catches the exception and routes it 
+to the appropriate handler. The handler finds the EXCEPTION_RECORD structure 
+at [esp + 4] and the faulting address at offset 0x18. Next, only the 
+instruction pointed by [ebx] (in this case, nop), is decrypted. The handler 
+then sets PAGE_READONLY on the execution page. Of course, the handler is in 
+the context of the debuggee, not the emulator, so it then restores the 
+debuggees pre-exception context and executes the same instruction again. 
+
+This time no Access Violation exception will occur and the data will be read 
+into al. Once the instruction is executed, the int 3 will ensure the emulator 
+that the copy was successful. The handler will then encrypt whatever data was 
+left exposed and set NO_ACCESS on the execution page, finally restoring the 
+debuggees context and returning to the context of the emulator.
+
+The emulator therefore generates 1-2 exceptions per execution of instruction.
+This, I thought, would be slow, and it most certainly is - when a debugger is
+attached.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+
+[+] Emulator/Virus Intercommunication [+]
+
+During the development of evenstar, it was required to build a communication
+bridge between the virus payload and the emulator. This may serve several
+purposes:
+
+1) For the Virus to determine information about the environment that it is 
+   running in. For example, where the emulator code is located so that it can
+   be copied to another binary.
+   
+2) So that the virus body does not need to resolve API, it can just ask the VM
+   for a pointer to a structure containing functions.
+   
+3) When the virus body is completed its task and wishes to return to the host.
+   This is made possible because the emulator knows of the return address, not
+   the virus.
+   
+Here is an example of the payload code:
+	
+	mov eax, signal
+	call eax
+	
+The emulator will read the signal stored in the debuggees eax register, and 
+return some information back, either in a register, or on the stack. 
+
+This allows for proper functioning of the payload, but it can also be used
+to make the x86 payload similar to bytecode, and to use the emulator
+as an interpreter.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+
+[+] Limitations [+]
+
+A rather serious limitation and weakness of win32.evenstar is the encryption
+routine. The encryption routine works by using a 32-bit xor key that is 
+rotated relative to the instruction length. However, a table must be built
+in order to decrypt the instructions appropriately. It is easy to script and 
+unpack the payload, effectively bypassing the emulator. Then again, any
+routine, no matter how complex, can be eventually reversed by a human. 
+
+Another limitation of the current emulator is its inability to use instructions
+like 'rep movsb', where esi is pointing to the encrypted payload. This is 
+because the emulator doesn't contain a full disassembler, and is unable to 
+determine the functionality of every instruction.
+
+Finally, the emulator itself is not encrypted and can thus be detected. This 
+is only a limitation within win32.evenstar itself. The emulator is designed
+to be modular, so any form of encryption will work.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+
+
+[+] Afterthoughts [+]
+
+The emulation technique used in win32.evenstar shows us that the AV can never
+be smart enough to figure out how to decrypt the whole payload. It will,
+however, run the emulator code perfectly, assuming it can get past the 
+exceptions generated by the emulator. Because only the emulator code and 
+only one instruction is plaintext, the AV will find it impossible to 
+ever read what is hidden in the payload.
+
+This allows for more sophisticated intercommunication that will allow for the
+emulator to detect sandboxing, and effectively alter the execution path of 
+the payload. 
+
+Further, it is possible to create a polymorphic code generator to build the 
+emulator. We would receive several benefits from this:
+
+	+ The emulator code would be difficult to detect
+	+ The polymorphic engine would be protected by the emulator and crypter
+	
+This dual operation between the emulator and mutation engine would make AVs
+job a whole lot harder.
+
+
+
+
+
+
+
+
+
