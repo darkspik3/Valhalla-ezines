@@ -1,0 +1,68 @@
+                         Quines - theory and practice
+                              roy g biv / defjam
+
+
+What is it?
+
+A  quine is a program which emits a copy of its own source code as its output.
+A  quine virus is a program that writes itself to a file instead of to stdout.
+
+The  simple  way to do this is to create a string that holds the  source  code
+and  then  write it.  The initial problem is that the character that  declares
+the  string cannot be used inside the string itself unless it is escaped.  The
+next  problem  is that the escaped character cannot escape itself when  it  is
+printed, so the escaping is lost in that case.  Here is an example of that:
+
+    char a="abcde";
+    char b="char a=\"abcde\";";
+
+now b will contain 'char a="abcde";'.  Okay, but how to write b?  Like this?
+
+    char c="char b=\"char a=\\\"abcde\\\";\";";
+
+Then  how  to write c?  But a is unescaped during the first pass, so it  loses
+some information when translated, and we cannot recover it using assignments.
+
+One  way to solve that is to parse the string and watch for special characters
+like the '"' and then to insert the '\' again manually, but this is ugly.  The
+way  that I solved the problem is to encode the string, using atoi().  I could
+use base64 or another encoding method, but it increases complexity.
+
+My initial implementation used an array, char a[]={};
+This technique required a very tricky decoding like this:
+
+    write(d,itoa(a[i],j+4,16)-3-!(i&63)+!i+!i,5+!(i&63)-(a[i]<14)-!i-!i),++i;
+
+The  line writes a comma before every token except first one, writes one digit
+for CR and LF, two for others, and writes LF every 64 bytes.  All this just to
+avoid including string.h.
+
+Eventually, I switched to string, char*a="",*f:
+and then decoding was simple, like this:
+
+    *f=a[j]*16+a[j+1]-a[j+1]/64*7-48;
+
+Then all we need is this:
+
+    while(a[++i]); /* calculate the length of our string */
+
+    for(;j<i;j+=2)
+    {
+        *f=a[j]*16+a[j+1]-a[j+1]/64*7-48; /* decode one character each time */
+        write(d,f,1);                     /* write the plaintext code */
+        if(j==16)                         /* wait for 'char*a="' written */
+            write(d,a,i);                 /* write atoi(code) */
+    }                                     /* continue writing plaintext code until end */
+
+Easy. ;)
+
+
+Greets to friendly people (A-Z):
+
+Active - Benny - herm1t - hh86 - jqwerty - Malum - Obleak - pr0mix -
+Prototype - Ratter - Ronin - RT Fishel - sars - SPTH - The Gingerbread Man -
+Ultras - uNdErX - Vallez - Vecna - Whitehead
+
+
+rgb/defjam october 2013
+iam_rgb@hotmail.com
