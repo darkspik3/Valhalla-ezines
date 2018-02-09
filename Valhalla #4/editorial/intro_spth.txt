@@ -1,0 +1,120 @@
+Yeyyyyyy.... here we are - into valhalla for the fourth time!!!!! :))
+
+Well done to hh86 again - as always she was like super motivated and has done 
+a fantastic job to bring this issue together, to motivate people (including 
+me) to work harder, faster; and for discovering and creating fantastic 
+techniques/codes by her own. Like a "Energizer bunny" (as one of our friends 
+on the other side once said). :)
+
+This is now actually the fifth e-zine of a series:
+- 01.01.2011: virus writing bulletin 2011 - valhalla #0 :-)
+- 05.08.2011: valhalla #1
+- 15.03.2012: valhalla #2
+- 21.12.2012: valhalla #3
+- 02.11.2013: valhalla #4
+
+
+To let me send some "HELL-Oh!" out:
+
+hh86 - Thanks for all the hard work you do, and the constant motivation for  
+       me. I most likely would not code all those kitties for the last 3years, 
+       so they somehow exist due to you ;)
+
+roy g biv - continuously contributing things to the vx scene for so many 
+            years. Thats great. And i presume you are now officially the 
+            person who infected most new platforms :) Keep on the good work! 
+            And thx for the interview!
+
+JPanic - I'm really happy that you came back, and that you are such a nice, 
+         helpful person. Your things are great, so much looking forward to 
+         that Linux64 kitti :))) Read you soon! and thanks for the interview!
+
+r3s1stanc3 - very nice that you are part of valhalla again. Its a very 
+             interesting and creative idea, I like that :) Hope you have more 
+             time to imagine and implement new fancy techniques!!
+
+M0SA - Hey man! Long time not seen. I'm very surprised about your research, 
+       seems to be so simple techniques, and still you get so good results. 
+       Thats wonderful. Congrats, well done! And very nice to brainstorm with 
+       you about machinal learning, swarm behaviour of autonomous artificial 
+       self-replicators etc :) makes alot of fun! Lets continue thinking about 
+       those crazy ideas :)
+
+Jeff Dahmer - Hey man! Thanks so much for bringing back VX Heaven, our awesome 
+              library, and the forum which we can use (and used - see my 
+              Polygamy, the idea was somehow born there) for brainstorming :))
+
+herm1t - yoooo! Thanks also to you for bringing back VX Heaven! and for 
+         everything you went through last 20months. I wish everything became 
+         fine finally. Looking forward to the crazy inside stories what 
+         happened :) Oh yes, and as you said, I also hope to see you next 
+         issue with some code. Many things are waiting... Fancy HLL meta. 
+         Final step of EPO. :) Read you soon!
+
+Black Sun - Hey! Maybe we have not talked yet - in any way, very fancy code 
+            that you send! wow. I'm looking forward to some tests of it, going 
+            to do that soon. Hope to have some direct contact with you some 
+            day :)
+
+genetix - heeeey! really happy your wrote me again. Wish you everything best 
+          to be fine soon again. it just occurs to me that you nearly forgot 
+          that you wanted to swim with sharks :-o See you soon :)
+
+virii - Ahoi - big big thanks to you for giving us a fast, reliabale, free (!) 
+        webspace! Thanks alot :) And nice that you released DC5, looking 
+        forward to DC6! Yo-ho-ho...
+
+pr0mix - yo man! very nice release with inception#1! looking forward to part 
+         2! i will try very hard to be part of it this time. nice to have another 
+         cool magazines around now :) 
+
+Peter Ferrie - thanks for analysing our malware and certifying that they are 
+               awesome :D Hope you have fun with this years kitties aswell :)
+
+Mark Stamp - thanks for your cool research and for having on of your students 
+             analysing metamorphic JavaScript codes :) Looking forward to news       
+             from your nice research!
+
+Eric Filiol - Your work is so wonderful. Would love to understand it much much 
+              better than I do now (and trust me, I have tried already.). 
+              Especially your behaviour mutational code and the k-ary theory. 
+              thats so creative, and put to the mathematical basis. wonderful 
+              :))
+
+Craig Venter - (who will most likely not read this) When I found your research 
+               about the synthetic life, I was absolutly excited! This is such 
+               an important result, and I wish you much luck with follow up 
+               research on the basis of biological life :) Thanks for it! 
+
+more greets to so many other people, this file has not enough space for 
+mention them all :-o :)
+
+
+
+One thing I want to make totally clear: We are interested in the old-school 
+kind of virus-writing. Our goal is to discover new techniques, think about new 
+concepts, learn dozents of languages (hi rgb :)), ... we are freelancer-
+reseacher and dont want to harm anybody (moreover we believe that the public 
+available codes here might help to improve security techniques).
+
+We do not want to earn any money with it - "VX vs Commerce", that question 
+does not exist. Its like "shooting sport vs. mass murder". Specifically that 
+means: We detest people who use botnets, banking trojans, spammin bots, ... to 
+earn money and harm people. These are criminals and should be punished.
+
+
+OK - dont waste your time in my little intro-words/greeting section, check out 
+the awesome stuff in the magazine :)
+
+
+                              [ ][0][ ]
+                              [ ][ ][0]
+                              [0][0][0]
+
+
+I see the virus writing is alive.
+
+                                                      Second Part To Hell
+                           http://spth.virii.lu/ / sperl.thomas@gmail.com
+                                                         twitter: @SPTHvx
+                                                            November 2013
