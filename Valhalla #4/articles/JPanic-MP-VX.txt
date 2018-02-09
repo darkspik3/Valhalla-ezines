@@ -1,0 +1,213 @@
+% Multi-Platform Viruses Made Easy - A Case Study by JPanic %
+_____________________________________________________________
+
+% Contents %
+____________
+. Synopsis
+. Clapzok: A Case Study
+. Comparisons to other Cross-Platfrom Viruses
+. Future Trends
+
+% Synopsis %
+____________
+
+This  article  is  written to give the reader an insight  to different  methods
+and  examples  of cross-platform viruses, and hopefully an insight  on how easy
+it can be  using  the 'CAPZLOQ TEKNIQ/Clapzok model' used by the author of this
+model.  I am  not saying that the other  cross-platform  viruses  aren't  great
+work, I simply believe this model is the simplest and easiest, thus far.
+
+
+Although   there   are   many   cross-platform   viruses   out  there, such  as 
+binary/executable  infecters, script  viruses  and macro viruses - this article
+will focus soley on binary/executable infectors.
+
+% Clapzok: A Case Study %
+_________________________
+
+'CAPZLOQ TEKNIQ 2.0',  better  known as Multi.Clapzok is an  x86-32bit infector
+of Win32 PE  (Windows Portable Executable)/Linux i386 ELF  (Executable/Linkable
+Format), i386 Macho (OS X Executable/Linkable)  and FAT (OS X Universal Binary)
+files. The virus runs under x86-32bit (i386) Windows, Linux and Mac OS X.
+
+Some  key  things to notice, before describing the implementation of this virus
+in more detail, include:-> The virus has very much identically under all
+			   affected operating systems.
+			-> All target file formats are equally infectable by
+			   the virus running under all affected operating
+			   systems.
+			-> The virus is around 2800 bytes, which I consider
+			   a good size for a triple-platform infecter that
+			   is not heavily optimizied.
+
+I  say  these  things  not to boast, but to demonstrate why  I am promoting the
+model to be described.   The secret to it all is standard interfaces, something
+like an API for the virus.   A basic summary of the Clapzok virus algorithms is
+something like this (notes will be explained below):
+
+        Entrypoint (note 1):
+                            Save flags, registers.
+                            Setup stack variables.
+                            Initialize RNG.
+                            
+                            Initialize Virus OS Call Table (note 2).
+                            Do vmain()
+                            
+        Exit point (note 1):Clear stack.
+                            Get original entrypoint (host EIP).
+                            Restore flags, registers.
+                            Return to host.
+
+        Virus main() (note 3):
+                            Initialize Virus Run-time (OS Specific).
+                            Get Current Working Dir and target directories (OS Specific)
+                            InfectDir(.)
+                            InfectDir(system dir a).
+                            InfectDir(system dir b).
+                            Exit Virus (OS Specific).
+                            
+        InfectDir() (note 3):
+                            FindFirst() (OS Specific).
+                            while (file found)
+                                Check filesize.
+                                Open and Map File (OS Specific).
+                                If PE InfectPE (note 3).
+                                If ELF InfectELF (note 3).
+                                If MACHO InfectMACHO (note 3).
+                                If FAT InfectFAT (note 3).
+                                Unmap and Close File (OS Specific).
+                                FindNext() OS Specific.
+                            loop.
+                            
+This is the basic virus algorithm. Things to note:
+
+Note 1: All  infected  files  of any file format and operating system share the
+        same entry and exit code.
+
+Note 2: This   is   the   real  cross-platform   feature  of  the  virus.  Many
+        steps/procedures are marked 'OS Specific'.  Each  of  these  procedures
+        is implemented for each operating.  For example:  Win32_Init, OSX_Init,
+        Linux_Init.  At infection time, a 1 byte switch is set  in  the  victim
+        specifying which operating system the victim will be running under.
+
+        Using  this  switch, before  any  OS Specific procedures are called, an
+        array of function addresses to each OS Specific procedures is created.
+        From  here  on, the  virus  may  make  calls using the operating system 
+        through  this  call  table, without having to worry about the specifics
+        of the operating system it is running under. 
+
+        Any  of  these  calls  have  the  same  interface  under  all  targeted
+        operating  systems.   For example:  Win32_Chdir, OSX_Chdir, Linux_Chdir
+        all take input/output from the same registers/eflags.
+
+        Operating  system  specific  calls used by Clapzok include: Init, Exit,
+        FindFirst, FindNext, SetUpDirs, Chdir, OpenMap, CloseUnmap.
+
+Note 3: In  the Clapzok model, all infection routines have a standard interface
+        just  like  all  operating  specific  calls.    For example,  infection 
+        procedures  for  all  target formats take  a register  pointing  to the 
+        memory  mapped  file and a varaible in memory allowing the procedure to
+        get and set the victim filesize.
+
+The significant  code  reuse  accross  operating systems and target filesystems
+has some advantages:    - Minimal Code Size.
+                        - Minimal work for the coder (no-recoding thigs for
+                          different OS's).
+                        - Minimal debugging/auditing of code.
+                        
+% Comparisons to other Cross-Platfrom Viruses %
+_______________________________________________
+
+Now   I   will   compare   Clapzok  with  some  other  cross-platform  viruses,
+including:      Esperanto.4733 by Mr Sandman.
+                16-Bit attempts by Qark, Dark Slayer and Dark Angel.
+                Winux by Benny.
+                Shrug family by Roy G Biv.
+                Metaphor.1d by The Mentral Driller.
+               
+        Esperanto.4733:  This  cross-platform  virus  was  coded  in 1997 by Mr 
+        Sandman in 1997.   It is  a  great  example  of a cross-platform virus,
+        especially  for  its time.   Esperanto is an infector of MS-DOS MZ/.COM
+        files, Win16 NewEXE (NE) and Win32 PE.  The virus  infects  all formats
+        under  all  targeted  operating  systems, but  behaves  differently  on 
+        different  OS'.s Under MS-DOS it is memory resident, while under Win16/
+        Win32 it is direct action.  The  virus  also  has the ability to drop a
+        Mac  virus  when  infected  windows  files are executed on Mac machines
+        under a windows  emulator, however  the virus  cannot replicate between
+        Mac and PC without user interaction.
+
+        16-Bit attempts: Some  16-Bit  cross-platform  viruses  come  to  mind.
+        'Ph33r'  was a  MS-DOS/Win16  cross infector.  Dark Slayers  DS  family
+        were MS-DOS/Win16/Boot.  Dark Angels  'Blah'  was  a batch file and MBR
+        infector.  Due  to  these operating systems now being obsolete, we will
+        not go further into these viruses.
+
+        Winux by Benny: This  seems  to be the first Win32/Linux cross-platform
+        infecter.  The  virus  was  a  direct-action infect of PE and ELF files
+        under both operating systems.  Behaviour  under  each  operating system
+        was  slightly  different.  Winux  searched  only '.' under Linux, while
+        searching  both  '.' and '..' under Windows.   Winux while coded first,
+        was  similar  in  functionality  to  CAPZLOQ TEKNIQ 1.0 (Multi.Bi.a)  a
+        precursor to Clapzok. It is worth noting the size of these viruses.
+        Multi.Winux  was  around  2.1k  while  Multi.Bi was around 1.2k. I note
+        this difference, not to put Benny down in anyway, but to show the space
+        that can be saved by the code reuse of the Clapzok Model.
+
+        Shrug by Roy G Biv: There  are  several viruses  in  this family, but I
+        will  concentrate  on  the Shrug!IA32/AMD64 virus of 2004.  This is one
+        of  the  few  *Cross-Architecture*  viruses  as  indicated by its name.
+        The  virus  is  very  much  the  same  virus written for IA32 and AMD64
+        bundled  together.   Since the virus only targeted one operating system
+        for  each  architecture  (Win32 or Win64)  the  virus  is  not really a
+        candidate for the Clapzok model.  However, future virus may target more
+        operating  systems, such as an x86/x64 Windows/Linux/OSX virus.  Such a
+        virus would then benefit from the Clapzok model. See the "Future 
+        Trends" section of this article.
+        
+        Metaphor.1d by The Mental Driller: While  this  virus is well known for
+        its   fantastic   metamorphic   abilities,  do   not   forget   it   is
+        cross-platform too.   Metaphor.1d behaves equally well under both Win32
+        and Linux, infecting PE and ELF's.   Metaphor  has a  high-rate of code
+        reuse,  as  in  the  Clapzok  model, with a single  switch to determine
+        which operating system it is running under.  This swith is incorporated
+        into the metamorphic engine of the virus.  Metaphor.1d also parses both
+        PE and ELF file imports equally well to implement EPO.
+        
+% Future Trends %
+_________________
+
+With  this  brief  discussion  of  cross-platform  viruses, let us discuss some 
+future  possibilites.  Most  basic  probabiltiy  is more and more sophsiticated
+cross-platform  malware.   The  methods used in Clapzok could easily be used in
+a more complex, robust and virulent virus.
+
+Next  let  us  consider  cross-architecture  viruses  like  Roy G Biv's  shrug.
+Clapzok was cross-platform but single-architecture, infecting x86  binaries and
+operating systems only.  But what if the Virus main procedure, operating system
+specific procedures and infection procedures were implemented in more  than one
+architecture.   This could add x64 and other architecure platforms into the mix
+while still making use of the Clapzok model.
+
+High Level Languages: Use  of  high  level  languages in cross-platform viruses
+could  lead  to  rapid  development.  Operating  specific  procedures  could be 
+implemented  in  c  for example, with only a small amount of OS specific inline
+assembler  and  compiled  for  all target operating systems. Infection routines
+could  be  written  in  type  and  endian  neutral  code, and compiled for each
+architecture targeted.
+
+What  about  cross-platform  toolkits?  Tiny, VX  orientated, stdlib/clib style
+libraries  could  be  produced  implemented  in  multiple operating systems for
+other virus authors to quickly and easily develop cross-platform infecters.
+
+Lastly, let  use  quickly discuss polymorphy and EPO in cross-platform viruses.
+Polymorphy  is  easy  to  implement  in  a  cross-platform  virus  for a single
+architecture  if  the decryptor code does not use any operating system specific
+code  or constructs.  If  the  decryptor  is  OS specific, some routines may be 
+implemented with a common interface for each OS, Clapzok style. 
+
+EPO  is  equally  possible. Imports for various binary formats maybe parsed for
+EPO hooks.  Text/Code sections may be parsed easily for several formats looking
+for common code like function prologues/epilogues. 
+
+I hope this has been useful to you -
+JPanic, 2013.
