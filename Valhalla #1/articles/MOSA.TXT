@@ -1,0 +1,200 @@
+Malware Statistical analysis and countermeasures 
+
+Written By: M0SA, August 2011 m0sa.vx@gmail.com 
+
+Metamorphism is becoming complex and harder to detect, so algorithmic approaches
+for detection is in turn becoming more complex and more  infeasible  for PCs due
+to restriction in execution time and memory.   The new trend in metamorphic code
+detection is the statistical analysis.  In  this  article  I will  give a  quick
+overview on  statistical  analysis  and  then  explain a new  approach  appeared
+in late 2010  called  Eigenviruses, and  finally, how  AVers  could  beat  those 
+techniques. 
+
+Here is the layout of the article: 
+
+. What is the problem?! 
+. Statistical Analysis 
+. Eigen-Viruses 
+. How to beat it 
+. Anti-anti statistical analysis 
+
+
+What is the problem?! 
+
+VXers  not  only always find new ways to beat debuggers and emulators, but  also 
+find  new  effective  ways  to obfuscate the new generations of code to look far
+different from previous generations. 
+
+There  are  many tricks to beat emulators and get them stuck at specific part of
+your  code, and  so  they abort detection process and your code gets executed as
+you want. This tricks varying from using instructions that some emulators cannot
+handle, such  as MMX instructions, or  using  techniques  like  tau-obfuscation.
+Consequently,  emulators  are  becoming  more  complex  in  order to bypass such
+techniques and in the same time  evolution of emulators has a limit of execution 
+feasibility in terms of time and/or memory. 
+
+
+Statistical Analysis 
+
+Statistical analysis  of a set of data means  to deduce hidden information about
+this data.   Statistical analysis is used in many fields around us, such as data
+mining,  face  recognition,  handwriting  recognition, voice  recognition, image
+recognition and classification and much more. 
+
+
+Mainly any statistical technique is either: 
+
+1- Speculates what is the next pattern of a set of data would be, or 
+2- Extracts the principal components of a set of data and determine what the common pattern among them is. 
+
+
+Examples of statistical analysis techniques are: 
+
+1- HMM (Hidden Markov Model) [1]: 
+
+Hidden  Markov  Model  is already  used  in many applications other than malware 
+detection.    Mark Stamp and Wing Wong introduced it as a method for metamorphic 
+virus  detection in 2006.  HMM system is mainly given a set of sample files of a 
+metamorphic  code, and  then it predicts with certain probability what could the
+next  file  look  like.  Then  when an unknown  input file is tested against the 
+system, a distance of the input file and the trained model is measured, if it is
+below  some  threshold,  then  the  file  belongs to the compared  virus family, 
+otherwise the file is clean.
+
+To beat it:  try to look like a benign file in other words, use instructions and
+structures of benign files. 
+
+
+2- Bayesian analysis [2]: 
+
+A naïve Bayesian classifier is a probabilistic classifier based on Bayes theorem
+applied  with  strong independence assumptions.   The technique tries to extract
+features of a given  virus, and gives a probability  for  each  feature  of  how
+strong  a  single  feature  contributes in the virus. Then if an unknown file is
+given, the previously extracted features is checked against the new file, if the
+file  is  similar to a certain extent, then the file belongs to the tested virus
+family, otherwise the file is clean. 
+
+To beat it: Also try to look like a benign file. 
+
+ 
+
+3- Statistical analysis of Byte-level content [3]: 
+
+Mainly  and  roughly  speaking, the technique is based on  n-gram classification
+approach.  It builds a model of learnt features of a training set to classify an
+input file as malware or benign. 
+
+To beat it: Also try to look like a benign file. 
+
+4- Entropy analysis [4]: 
+
+Mainly  used  to  automate  the process of identification of packed or encrypted 
+malware.   Basically, entropy measures the ability or probability of independent
+prediction of the  next byte in a series of bytes. High entropy means difficulty
+of predicting the next byte  of  a  sequence, thus it means  that  the  sequence
+contains random (or more specifically pseudo-random) bytes. 
+
+To beat it:  deceive  the  entropy  probability  so put guessable patterns among
+pseudo-random bytes. That is, you can put sequence of the same byte or gradually
+increasing  byte  values  in between  blocks of packed code, and maintaining the
+decryption process to bypass those low frequency sequences. 
+
+ 
+
+5- Eigenviruses [5]: to be discussed in the next section. 
+
+
+
+VXers’  techniques  to beat emulators are completely useless against statistical
+technique,  because  the  statistical  analysis  techniques  do  not rely on the 
+behavior of the code and don’t even try to execute it. 
+
+
+
+Eigen-Viruses 
+
+One  of  the  most  common  and  powerful  techniques  for  face  recognition is 
+“Eigenfaces”, it was proposed by Matthew Turk and Alex Pentland in the beginning
+of 90s. Roughly speaking, the theory behind Eigenfaces is that although multiple
+images for the same person may seem  different  due  to age, light direction and
+pose of the face, a common pattern can be extracted  from these set of images so
+they can all be mapped to the same person. 
+
+The  same  approach  is  applied  to  morphed  code  in  Eigenviruses  approach. 
+Eigenviruses  is  a new technique proposed in late 2010 and is under publication
+in IET journal of information security.   Eigenviruses  treats  the  code of the
+metamorphic virus as a face image.   The  Eigenviruses  system is given a set of 
+sample  files  of a  certain metamorphic code, and then the system can recognize
+the  common  pattern  among  them.  The more the sample files, the more accurate 
+information are learnt about the code. 
+
+The  authors  of the  technique  showed very good result of detecting well known 
+metamorphic  viruses  such  as MetaPHOR and Zmist. However, Eigenviruses is like
+any other method it can be hacked.   And  that’s what I will explain in the next
+section. 
+
+
+How to beat it 
+
+The  idea  behind  any  anti-statistical  analysis  technique  is  to have a big
+difference as possible of  the  byte values of the same  part of the code across
+generations. For example, look at figure 1(a)  and 1(b). Consider that the first
+and fourth line are meaningful instructions (they might don’t  have  meaning  in
+this example), the second and the third line are random bytes.   The  difference
+between the byte values of the second and third line are the maximum  difference
+that could be. 
+
+
+
+               Figure 1. Two generation of a metamorphic code 
+
+
+9E 87 65 7C 9B 21 35 6D 98 9A 12                9E 87 65 7C 9B 21 35 6D 98 9A 12 
+
+00 00 00 00 00 00 00 00 00 00 00                FF FF FF FF FF FF FF FF FF FF FF
+                                      ->
+00 00 00 00 00 00 00 00 00 00 00                FF FF FF FF FF FF FF FF FF FF FF
+
+8D 93 55 46 82 6F 4D 65 5A 66 2C                8D 93 55 46 82 6F 4D 65 5A 66 2C
+
+       a) Nth generation                             b) (N+1)th generation 
+
+
+
+Therefore, beating a statistical  analysis technique can be done by some tricks: 
+
+1- Inserting totally random bytes at random locations while maintaining the same
+flow of execution.
+
+2- Size, code size is an important feature  taken care of by most of statistical
+analysis techniques.  The  more  variable  code  size  of  the samples, the more
+difficult to extract a  common  pattern, and so the more difficult to detect the
+virus.  This  can  be  done by inserting a big size of junk code – in  different
+areas — that might be even equal or more than the actual virus code size. 
+
+3- Code reordering is also a good trick against statistical analysis. 
+
+There can be more  tricks  based on the idea of byte value difference that could
+be easily  implemented. 
+
+
+Anti-anti-statistical analysis 
+
+Fortunately – from AVers point of view- the aforementioned tricks can be beaten.
+An emulator  or  normalizer can be run on the code to clean it from random bytes
+chunks or reorder the code based on its execution sequence. However, fortunately
+– from VXers view this time- we get back to emulators again which we know how to
+beat them and where all anti-emulators and anti-debugging technique apply.
+
+ 
+
+ 
+
+References 
+
+[1] Wong,W., Stamp,M., “Hunting for metamorphic engines”, Journal in Computer Virology, 2(3), pp. 211–219, 2006. 
+[2] InSeon Yoo and Ulrich Ultes-Nitsche, “How to Predict Email Viruses Under Uncertainty”, IEEE International Conference on Performance, Computing, and Communications, 2004. 
+[3] SM Tabish, MZ Shafiq, “Malware detection using statistical analysis of byte-level file content”, Proceedings of the ACM SIGKDD Workshop on CyberSecurity and Intelligence Informatics, 2009. 
+[4] Lyda, R.; Hamrock, J., “Using Entropy Analysis to Find Encrypted and Packed Malware”, Security & Privacy, IEEE, 2007. 
+[5] A. Nabi, Moustafa Saleh, A. Baith, “Eigenviruses for Metamorphic Virus Recognition”, IET journal of Information security, Under publication. 
