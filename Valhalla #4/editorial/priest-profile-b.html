@@ -1,0 +1,723 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.0.0  (Win32)">
+	<META NAME="CREATED" CONTENT="0;0">
+	<META NAME="CHANGEDBY" CONTENT="The Soul Manager">
+	<META NAME="CHANGED" CONTENT="20131027;10070658">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		PRE { font-family: "Times New Roman", serif }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-AU" DIR="LTR">
+<a name="top">
+<PRE><FONT SIZE=6><B>Virus Writer Profile: Priest</B></FONT>
+
+<FONT SIZE=5>Written by JPanic</FONT>
+
+<FONT SIZE=5><U><B>Table Of Contents:</B></U></FONT>
+
+        <FONT SIZE=5><a href="#about">About Priest.</a></FONT>
+        <FONT SIZE=5><a href="#satanbug">Virus: Satanbug</a></FONT>
+        <FONT SIZE=5><a href="#fruitfly">Virus: Fruitfly</a></FONT>
+        <FONT SIZE=5><a href="#payback">Virus: Payback</a></FONT>
+        <FONT SIZE=5><a href="#jackal">Virus: Jackal</a></FONT>
+        <FONT SIZE=5><a href="#predator">Virus: Predator</a></FONT>
+        <FONT SIZE=5><a href="#predator2">Virus: Predator 2</a></FONT>
+        <FONT SIZE=5><a href="#incubus">Virus: Incubus</a></FONT>
+        <FONT SIZE=5><a href="#natas">Virus: Natas</a></FONT>
+        <FONT SIZE=5><a href="#references">References</a></FONT>
+        
+
+<a name="about"></a>
+<FONT SIZE=5><U><B>% About Priest %</B></U></FONT>
+
+<FONT SIZE=5>Priest (aka Little Loc) was a young but talented American virus writer, with a</FONT>
+<FONT SIZE=5>career spanning 1992 to 1994. Priest's first two viruses, Incubus and Satanbug</FONT>
+<FONT SIZE=5>were authored under the handle &quot;Little Loc&quot; while in later ones he called</FONT>
+<FONT SIZE=5>himself &quot;Priest&quot; after joining Phalcon/SKISM. Priest seemed to be a fan of the</FONT>
+<FONT SIZE=5>infamous virus writer &quot;Dark Avenger&quot; (dav) and studied his viruses, and what </FONT>
+<FONT SIZE=5>he considered other &quot;real viruses&quot; diligently. Like Dark Avenger, Priest often</FONT>
+<FONT SIZE=5>included dangerous payloads in his viruses. Priests viruses were sophisticated</FONT>
+<FONT SIZE=5>for their time, and many did well in the wild. Viruses by Priest include (but</FONT>
+<FONT SIZE=5>are not limited to): Satanbug, Incubus, Fruitfly, Natas, Payback, Jackal,</FONT>
+<FONT SIZE=5>Predator. In 1994 Priest was visited by the Secret Service, after a person</FONT>
+<FONT SIZE=5>known as 'Aristotle', a BBS sysop for NuKE, handed over his personal details.</FONT>
+<FONT SIZE=5>The fact that Satanbug had infiltrated the Secret Service's network causing a</FONT>
+<FONT SIZE=5>small epidemic did not help. After these legal problems Priests was offered a</FONT>
+<FONT SIZE=5>job at Norman Data Defence on finishing high school. This position did not</FONT>
+<FONT SIZE=5>last for long. Although a skilled and 'elite' virus writer, Priest seemed</FONT>
+<FONT SIZE=5>friendly approachable, willing to chat with newer and lesser vx'ers and even</FONT>
+<FONT SIZE=5>help them out with coding problems. [1]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="satanbug"></a>
+<FONT SIZE=5><U><B>% Virus: Satanbug %</B></U></FONT>
+
+<FONT SIZE=5>'Satanbug' was probably Priest's (Little Loc) most publicised virus due to the</FONT>
+<FONT SIZE=5>outbreak on the Secret Service's network. Satanbug was a polymorphic memory-</FONT>
+<FONT SIZE=5>resident fast infecter of MS-DOS .COM and .EXE files, along with COMMAND.COM.</FONT>
+<FONT SIZE=5>Satanbug was polymorphicly encrypted in both files and memory. Encryption</FONT>
+<FONT SIZE=5>could have as many as 9 layers. Satanbug was also a retro virus, disabling</FONT>
+<FONT SIZE=5>'Virus Scan' validation and 'CPAV' (Central Point Anti-Virus) immunisation</FONT>
+<FONT SIZE=5>when infecting files. When a Satanbug infected file was run, the virus would</FONT>
+<FONT SIZE=5>decrypt itself and then immediately relocate CS:IP so the virus was aligned at</FONT>
+<FONT SIZE=5>offset 100h. This avoided the need for 'delta offset' operations through out</FONT>
+<FONT SIZE=5>the virus. If run from a .COM file, Satanbug would next restore the first 4</FONT>
+<FONT SIZE=5>bytes of the file that were patched during infection. At this point Satanbug</FONT>
+<FONT SIZE=5>would check if it was already memory-resident and immediately return control</FONT>
+<FONT SIZE=5>to the host if so. If Satanbug was not memory-resident, and not running from</FONT>
+<FONT SIZE=5>an infected COMMAND.COM it would search the environment segment of the host</FONT>
+<FONT SIZE=5>for 'COMSPEC=' string (COMSPEC variable). If COMSPEC did not equal</FONT>
+<FONT SIZE=5>'COMMAND.COM' the Satanbug would again return control to the host with out</FONT>
+<FONT SIZE=5>going memory-resident. When Satanbug goes memory resident it obtains the</FONT>
+<FONT SIZE=5>segment of the host MCB (Memory Control Block) and then walks the MCB chain</FONT>
+<FONT SIZE=5>until the last MCB is found. Satanbug reduces the amount of memory allocated</FONT>
+<FONT SIZE=5>by the MCB, as well as the 16-bit WORD at 0:413h (BIOS Data - Size of</FONT>
+<FONT SIZE=5>Conventional Memory in Kilobytes) to allocate memory for itself. The virus</FONT>
+<FONT SIZE=5>then moves itself to the newly allocated memory. Next INT 21h (MS-DOS API) is</FONT>
+<FONT SIZE=5>hooked in an unusual manner. An internal flag in the virus is cleared to</FONT>
+<FONT SIZE=5>indicate that the virus is not in the middle of an INT 21h call. This flag is</FONT>
+<FONT SIZE=5>used to avoid recursive handling of INT 21h calls due to the polymorphic</FONT>
+<FONT SIZE=5>encryption in memory. The original INT 21h vector is obtained using</FONT>
+<FONT SIZE=5>INT 21h/AH=35h (get interrupt vector), and a JMP FAR (opcode 0EAh) is built</FONT>
+<FONT SIZE=5>pointing to the original INT 21h. Another JMP FAR is built pointing to </FONT>
+<FONT SIZE=5>Satanbugs own INT 21h handler, but the exact offset of this JMP will change</FONT>
+<FONT SIZE=5>depending on whether Satanbug is currently encrypted in memory or not, and</FONT>
+<FONT SIZE=5>whether it is in the middle of an INT 21h call. INT 21h/AH=25h</FONT>
+<FONT SIZE=5>(set interrupt vector) is then used to point INT 21h to this second JMP FAR</FONT>
+<FONT SIZE=5>(virus INT 21h handler). Memory-residency is now complete, and Satanbug</FONT>
+<FONT SIZE=5>returns control to the host. When encrypted in memory the polymorphic code</FONT>
+<FONT SIZE=5>PUSH's (saves) all the registers before decryption and the INT 21h hander</FONT>
+<FONT SIZE=5>POP's (restores) them back. The INT 21h handler is used to provide the</FONT>
+<FONT SIZE=5>memory-residency check and to catch files to infect. Satanbug is only</FONT>
+<FONT SIZE=5>decrypted in memory if one of these INT 21h functions is called</FONT>
+<FONT SIZE=5>(polymorphic stub checks the value of AH first). Files are infected on</FONT>
+<FONT SIZE=5>open, extended open, and execute. When infecting a file Satanbug stores</FONT>
+<FONT SIZE=5>address of the current DTA (Disk Transfer Area), sets the the new DTA </FONT>
+<FONT SIZE=5>address to the virus heap and calls an INT 21h/AH=4Eh (ASCII FindFirst) on the</FONT>
+<FONT SIZE=5>filename. The ASII find record created in the new DTA provides Satanbug with</FONT>
+<FONT SIZE=5>the files name in upper-case, size, attributes and date-stamp The DTA is then</FONT>
+<FONT SIZE=5>restored to its original address. Satanbug differentiates the type of file</FONT>
+<FONT SIZE=5>being infected with 3 checks: If the file begins with the 'MZ' header it is</FONT>
+<FONT SIZE=5>treated as a .EXE file. If the filename is 'COMMAND.COM' it is clearly a</FONT>
+<FONT SIZE=5>COMMAND.COM infection. Finally if the extension of the file is '.COM' it is</FONT>
+<FONT SIZE=5>treated as a .COM file. If the file does not match any of these criteria, it</FONT>
+<FONT SIZE=5>is not infected. If the 'read-only' attribute is set on the victim file,</FONT>
+<FONT SIZE=5>Satanbug clears the attributes and restores them after infection. Infected</FONT>
+<FONT SIZE=5>files are marked by adding 100 years to the date-stamp Apart from disabling of</FONT>
+<FONT SIZE=5>anti-virus immunisation codes, the file infection algorithms are fairly</FONT>
+<FONT SIZE=5>standard. Satanbug includes the text string:</FONT>
+
+<FONT SIZE=5><I>Satan Bug virus - Little Loc</I></FONT>
+
+<FONT SIZE=5>[1] [2] [3] [4]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="fruitfly"></a>
+<FONT SIZE=5><U><B>% Virus: Fruitfly %</B></U></FONT>
+
+<FONT SIZE=5>In addition to the original Satanbug virus, there was also the 'Fruitfly'</FONT>
+<FONT SIZE=5>variant. The main difference between Fruitfly and Satanbug was that Fruitfly</FONT>
+<FONT SIZE=5>was not memory resident, infecting all .com files in the current directory and</FONT>
+<FONT SIZE=5>directories in the 'PATH' environment variable. Additionally, Fruitfly only</FONT>
+<FONT SIZE=5>infected MS-DOS .com files, not .exe. Fruitfly also deleted certain anti-virus</FONT>
+<FONT SIZE=5>database files used for integrity checking: 'VS.VS' and 'CHKLIST.CPS':</FONT>
+<FONT SIZE=5>ViruScan and CPAV (Central-Point Anti-Virus) respectively. Fruitfly includes</FONT>
+<FONT SIZE=5>the text strings: </FONT>
+
+<FONT SIZE=5><I>Fruit Fly virus - Little Loc</I></FONT>
+<FONT SIZE=5><I>Hacker4Life</I></FONT>
+<FONT SIZE=5><I>Hackers In ThE Mist</I></FONT>
+
+<FONT SIZE=5>[3] [4]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+ <a name="payback"></a>
+<FONT SIZE=5><U><B>% Virus: Payback %</B></U></FONT>
+
+<FONT SIZE=5>After Satanbug came 'Payback'. Payback was a full stealth memory-resident</FONT>
+<FONT SIZE=5>floppy boot sector and MBR infecter written in retaliation for the arrest of</FONT>
+<FONT SIZE=5>members of the British 'ARCV' virus writing group. On January 27th, Payback</FONT>
+<FONT SIZE=5>would erase the CMOS, format the first physical hard drive and display a</FONT>
+<FONT SIZE=5>message. When a disk infected with Payback was run, the virus would setup the</FONT>
+<FONT SIZE=5>stack and 'DS' (data segment) register. Payback would then allocate 1kb of</FONT>
+<FONT SIZE=5>memory by decrementing the 16-bit WORD at 0:413h (BIOS size of conventional</FONT>
+<FONT SIZE=5>memory) and hook INT 13h (BIOS Disk Services) directly in the IVT (interrupt</FONT>
+<FONT SIZE=5>vector table). Payback then copied itself to this newly allocated memory -</FONT>
+<FONT SIZE=5>after hooking INT 13h, but this should not be a problem. Once copied over</FONT>
+<FONT SIZE=5>Payback would continue execution in this new copy and load the original</FONT>
+<FONT SIZE=5>(uninfected) boot sector back to 0:7C00h (load address of a boot sector) using</FONT>
+<FONT SIZE=5>INT 13h/AH=02h (Read Sector). The instructions to set registers CX and DX for</FONT>
+<FONT SIZE=5>this INT 13h calls are modified by the virus on each infection to reflect the</FONT>
+<FONT SIZE=5>correct location of the original sector on that disk. Payback then hits the</FONT>
+<FONT SIZE=5>MBR. The MBR is loaded, checked if already infected (offset 10h = 12CDh,</FONT>
+<FONT SIZE=5>INT 12h instruction of the virus) and checked if bootable (last 16-bit word is</FONT>
+<FONT SIZE=5>0AA55h). If these conditions are met MBR infection continues. The original MBR</FONT>
+<FONT SIZE=5>is written to head 0, track 0, sector 2 of the hard drive (unused by MS-DOS)</FONT>
+<FONT SIZE=5>and address of this sector is stored in the virus (see above). Payback then</FONT>
+<FONT SIZE=5>conditionally runs its activation routine and control is returned to the</FONT>
+<FONT SIZE=5>original, 'clean' sector at 0:7C00h. Paybacks INT 13h handler performs two</FONT>
+<FONT SIZE=5>functions: infecting floppies, and stealth. Both these functions are performed</FONT>
+<FONT SIZE=5>if a read sector request (INT 13h, AH=02h) is called on head 0, cylinder 0,</FONT>
+<FONT SIZE=5>sector 1 (boot sector/MBR). In such a case the INT 13h handler begins by</FONT>
+<FONT SIZE=5>allowing the read of the boot sector to go through and aborts on error. Next</FONT>
+<FONT SIZE=5>Payback checks if the sector is already infected - WORD at offset +10 = -12CDh,</FONT>
+<FONT SIZE=5>same check as when infecting the MBR. If the sector is already infected,</FONT>
+<FONT SIZE=5>stealth action is taken. If the sector is not already infected and is on a</FONT>
+<FONT SIZE=5>floppy drive the disk is infected. Stealth is achieved through a simple</FONT>
+<FONT SIZE=5>algorithm: CX and DX registers are saved, Payback takes the location of the</FONT>
+<FONT SIZE=5>original (uninfected) sector from the previously read virus body, reads the</FONT>
+<FONT SIZE=5>original sector over the infected sector in memory, restores registers and</FONT>
+<FONT SIZE=5>returns from the INT 13h handler. When infecting floppies, the original</FONT>
+<FONT SIZE=5>sector is stored in the last sector of the diskette. This sector is calculated</FONT>
+<FONT SIZE=5>using the 'NumSectors', 'SectorsPerTrack' and 'NumberOfHeads' fields of the</FONT>
+<FONT SIZE=5>BPB (BISO Parameter block) and checks are performed for non-standard disks.</FONT>
+<FONT SIZE=5>The address of this sector is stored in the virus body, and Payback writes</FONT>
+<FONT SIZE=5>itself to the floppies boot sector. As when infecting the MBR, Payback checks</FONT>
+<FONT SIZE=5>if the sector is bootable by 0AA55h marker in the last 16-bit WORD of the</FONT>
+<FONT SIZE=5>sector. On infection Payback displays the message:</FONT>
+
+<FONT SIZE=5><I>That was for ARCV, mother fucker!</I></FONT>
+<FONT SIZE=5><I>Payback! (c) 1993'</I></FONT>
+
+<FONT SIZE=5>[1] [6]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="jackal"></a>
+<FONT SIZE=5><U><B>% Virus: Jackal %</B></U></FONT>
+
+<FONT SIZE=5>'Jackal' was Priest's next virus. Jackal was a memory-resident full-stealth</FONT>
+<FONT SIZE=5>multipartite infect of the MBR and MS-DOS .COM and .EXE files. Jackal</FONT>
+<FONT SIZE=5>contained some interesting features. When infecting the MBR, Jackal only</FONT>
+<FONT SIZE=5>modified 3 bytes of the partition table. When loaded from an infected MBR,</FONT>
+<FONT SIZE=5>Jackal attempted to 'survive' a warm-reboot when 'CTRL+ALT+DEL' was pressed.</FONT>
+<FONT SIZE=5>Jackal was also a destructive virus, containing 3 separate destructive</FONT>
+<FONT SIZE=5>payloads. The condition for the first and most destructive payload is the</FONT>
+<FONT SIZE=5>most interesting: Jackal infected files were able to detect the presence of</FONT>
+<FONT SIZE=5>'TBCLEAN' (the generic file disinfection utility of ThunderByte Anti-Virus),</FONT>
+<FONT SIZE=5>and disable its 'controlled environment'. When attempting to TBCLEAN a Jackal</FONT>
+<FONT SIZE=5>infected file, Jackal would break out of TBCLEAN, lock the keyboard (port 21h,</FONT>
+<FONT SIZE=5>IRQ Enable Mask), trash the CMOS (ports 70h, 71h), then entirely format all</FONT>
+<FONT SIZE=5>hard drives reported by the BIOS then freeze the computer with 'CLI, HLT'</FONT>
+<FONT SIZE=5>series of instructions. The other 2 payloads were executed periodically after</FONT>
+<FONT SIZE=5>a file was infected. Jackal maintained a counter of files that had been</FONT>
+<FONT SIZE=5>infected. If this counter value was a multiple of 32 after infecting the last</FONT>
+<FONT SIZE=5>file Jackal would implement its lesser payload: A random sector is read from</FONT>
+<FONT SIZE=5>the first hard drive, a random byte is modified in this sector, and the sector</FONT>
+<FONT SIZE=5>is re-written. This lead to slow, gradual corruption of the data on the hard</FONT>
+<FONT SIZE=5>drive. The other destructive payload was called if this 'infection counter'</FONT>
+<FONT SIZE=5>was a multiple of 666h (1638 decimal): A randomly chosen track of the first</FONT>
+<FONT SIZE=5>hard drive was formatted Both these last 2 payloads were gradual and at times</FONT>
+<FONT SIZE=5>could go unnoticed. The last 2 payloads were only called if the BIOS INT 40h</FONT>
+<FONT SIZE=5>(Floppy Disk Services) vector was different from the BIOS INT 13h (Disk</FONT>
+<FONT SIZE=5>Services) vector. In all 3 payloads the (tunnelled) INT 13h vector is used to</FONT>
+<FONT SIZE=5>access the hard drive, bypassing anti-virus software. When infecting the MBR</FONT>
+<FONT SIZE=5>only 3 bytes of the partition table are affected. Jackal reads the MBR and </FONT>
+<FONT SIZE=5>checks if it is bootable (0AA55h marker in last two bytes). Next it saves the</FONT>
+<FONT SIZE=5>affected 3 bytes of the partition table: start cylinder/sector and start head</FONT>
+<FONT SIZE=5>of the first partition. The virus then loads the first sector of this</FONT>
+<FONT SIZE=5>partition (boot sector) and checks if it is bootable (0AA55h marker) and if</FONT>
+<FONT SIZE=5>it is not already infected (infection marker). Jackal then re-reads the MBR,</FONT>
+<FONT SIZE=5>calculates address of a last 7 sectors on the first physical track (using the</FONT>
+<FONT SIZE=5>'last cylinder/sector' field of the first partition table entry), saves this</FONT>
+<FONT SIZE=5>sector address, saves 2 bytes at offset 01FEh of the virus and sets them to</FONT>
+<FONT SIZE=5>0AA55h marker. Jackal then writes itself to the least 7 sectors of the first</FONT>
+<FONT SIZE=5>track then restores the bytes at offset 01FEh of the virus. Finally the virus</FONT>
+<FONT SIZE=5>sets the first head, cylinder, track of the first partition of the MBR to the</FONT>
+<FONT SIZE=5>first sector of virus code and rewrites the MBR. This change of the partition</FONT>
+<FONT SIZE=5>table means that the first sector of the virus is read instead of the boot</FONT>
+<FONT SIZE=5>sector of the partition and that first sector loads the rest of the virus.</FONT>
+<FONT SIZE=5>Since the change to the partition table is hidden by Jackals stealth</FONT>
+<FONT SIZE=5>abilities, booting off a clean disk or attempting to disinfect the hard drive</FONT>
+<FONT SIZE=5>with 'FDISK /mbr' or any other utility that replaces the MBR code will leave</FONT>
+<FONT SIZE=5>the first partition inaccessible. When loading from an infected MBR the Jackal</FONT>
+<FONT SIZE=5>sets the DS and register then allocates 5kb of memory by reducing 16-bit WORD</FONT>
+<FONT SIZE=5>at 0:413h (BIOS size of conventional memory). The virus then copies the first</FONT>
+<FONT SIZE=5>sector (512 bytes) of itself to this newly allocated memory and corrects the</FONT>
+<FONT SIZE=5>bytes that were patched with the 0AA55h marker. Jackal jumps to this new</FONT>
+<FONT SIZE=5>copy of its first sector and immediately loads the remaining 6 sectors of the</FONT>
+<FONT SIZE=5>virus from the end of the first track. If this read fails, the original boot</FONT>
+<FONT SIZE=5>sector of the partition is loaded and executed. Jackal saves a copy of the</FONT>
+<FONT SIZE=5>entire IVT (interrupt vector table) in its memory - this is used to fake a</FONT>
+<FONT SIZE=5>warm reboot. The virus also saves the new value at 0:413h (BIOS size of</FONT>
+<FONT SIZE=5>conventional memory) for the same reason. Next the virus hooks INT 09h</FONT>
+<FONT SIZE=5>(Keyboard IRQ) and INT 13h (BIOS Disk Services). The INT 09h handler is used</FONT>
+<FONT SIZE=5>solely to fake the warm reboot: If ALT+CONTROL+DEL is pressed Jackal takes</FONT>
+<FONT SIZE=5>special action, otherwise control is released to the original INT 09h handler.</FONT>
+<FONT SIZE=5>When faking a warm reboot, Jackal resets and enables the Keyboard hardware</FONT>
+<FONT SIZE=5>controller, restores the saved interrupt vector table, zeros its INT 21h</FONT>
+<FONT SIZE=5>vector, clears they keyboard flags and sets the value of 0:413h, sets video</FONT>
+<FONT SIZE=5>mode 03h and default cursor (using INT 10h), re-hooks INT 09h and INT 013h then</FONT>
+<FONT SIZE=5>finally issues an INT 19h (BIOS boot-strap loader). The INT 13h handler serves</FONT>
+<FONT SIZE=5>two purposes: hooking INT 21h (MS-DOS API) when loading from the MBR, and</FONT>
+<FONT SIZE=5>stealthing the MBR. Hooking of INT 21h is achieved by checking the segment of</FONT>
+<FONT SIZE=5>the INT 21h vector on every INT 13h call. When it is is below 800h, INT 21h </FONT>
+<FONT SIZE=5>is hooked in the IVT and this check is disabled. Stealth of the MBR is quite a</FONT>
+<FONT SIZE=5>simple process. After the MBR is read, if the first partition points to the </FONT>
+<FONT SIZE=5>first sector of the virus (reading in this sector and checking infection</FONT>
+<FONT SIZE=5>marker), the modified 3 bytes of the partition table are taken from the just</FONT>
+<FONT SIZE=5>read first sector of the virus and the read MBR is corrected. After hooking</FONT>
+<FONT SIZE=5>INT 09h and INT 13h, Jackals MBR loader code reads the original boot sector of</FONT>
+<FONT SIZE=5>the first partition and executes. If this read fails, an INT 18h (Transfer to </FONT>
+<FONT SIZE=5>ROM BASIC) is issued. When running from an infected file Jackal immediately</FONT>
+<FONT SIZE=5>saves the 'CS' register and realigns CS:IP so that it is run from offset 0</FONT>
+<FONT SIZE=5>using a 'RETF' instruction. This eliminates the need for use of a 'delta</FONT>
+<FONT SIZE=5>offset' register. The virus then sets two switches: one to tell its INT 13h</FONT>
+<FONT SIZE=5>handler not to check for INT 21h hook, and one to tell the virus to later</FONT>
+<FONT SIZE=5>tunnel and patch some interrupts.  After this a routine is called to detect</FONT>
+<FONT SIZE=5>and disable 'TBCLEAN' (see above). If 'TBCLEAN' is detected Jackal modifies</FONT>
+<FONT SIZE=5>its code to run the destructive payload instead of returning to the host when</FONT>
+<FONT SIZE=5>it is done. Jackal then aves the entire IVT (interrupt vector table) and</FONT>
+<FONT SIZE=5>retrieves the segment of the first MCB (INT 21h/AH=52h - DOS List of Lists)</FONT>
+<FONT SIZE=5>and considers any thing below this segment as belonging to DOS when it tunnels</FONT>
+<FONT SIZE=5>interrupts. After this INT 13h, INT 21h, INT 15h and INT 40h are tunnelled</FONT>
+<FONT SIZE=5>using INT 01h single-stepping. In case of INT 21h, the MS-DOS handler is saved.</FONT>
+<FONT SIZE=5>In the case of INT 13h both MS-DOS and BIOS handlers are saved. In the case of</FONT>
+<FONT SIZE=5>INT 15h and INT 40h the BIOS handlers are saved. Jackals INT 01h handler </FONT>
+<FONT SIZE=5>emulates PUSHF/POPF/IRET/INT xx/INT3/INTO instructions to hide TF (Trace Flag)</FONT>
+<FONT SIZE=5>and to stop it from being cleared. The virus then checks if it is already </FONT>
+<FONT SIZE=5>memory-resident. Jackal does not survive a warm reboot when loaded from a file</FONT>
+<FONT SIZE=5>infection. Jackal then allocates memory: The virus checks that the hosts MCB</FONT>
+<FONT SIZE=5>(Memory Control Block) is the last in the chain and is big enough to allow</FONT>
+<FONT SIZE=5>allocation and then reduces it and 'Top Of Memory' field (offset +02h) of the</FONT>
+<FONT SIZE=5>host PSP (Program Segment Prefix). Jackal copies itself to this newly allocated</FONT>
+<FONT SIZE=5>memory and jumps to it, continuing execution. Next Jackal infects the MBR (see</FONT>
+<FONT SIZE=5>above). The virus hooks INT 13h and INT 21h. Unlike loading from an MBR, file</FONT>
+<FONT SIZE=5>infections do not hook these interrupts in the Interrupt Vector Table. Instead</FONT>
+<FONT SIZE=5>the code of the tunnelled INT 13h and INT 21h MS-DOS handlers are patched with</FONT>
+<FONT SIZE=5>a 5-byte JMP FAR (0EAh) instruction each, pointing to the virus handlers.</FONT>
+<FONT SIZE=5>Jackal then returns control to the host (or the TBCLEAN payload). The INT 21h</FONT>
+<FONT SIZE=5>handler of Jackal serves 4 purposes: the memory-residency check, to activate</FONT>
+<FONT SIZE=5>the payloads (see above), to infect files and to stealth files. Files are</FONT>
+<FONT SIZE=5>infect on open, extended open, execute and close calls. When infecting on</FONT>
+<FONT SIZE=5>'close' the virus first duplicates the handle (INT 21h/AH=45h). When infecting</FONT>
+<FONT SIZE=5>a file, Jackal resets the INT 13h, INT 15h and INT 40h vectors in the IVT to</FONT>
+<FONT SIZE=5>boot time or tunnelled values to bypass anti-virus software. Jackal also uses</FONT>
+<FONT SIZE=5>System File Table (SFT) entries to avoid lseek/chmod/date/time calls in an </FONT>
+<FONT SIZE=5>attempt to reduce code size and by pass anti-virus software too. Finally,</FONT>
+<FONT SIZE=5>files are opened read-only and then the SFT entry is modified to read/write,</FONT>
+<FONT SIZE=5>again to bypass anti-virus software. Infected files are marked by adding 100</FONT>
+<FONT SIZE=5>years to their time-stamp File infection is standard append to the end and</FONT>
+<FONT SIZE=5>modify the header type, except the virus is aligned on a 16-byte boundary so</FONT>
+<FONT SIZE=5>the virus can re-align itself to offset 0 when loaded (see above), and the</FONT>
+<FONT SIZE=5>appropriate amount of padding is put between the end of the virus and the</FONT>
+<FONT SIZE=5>original file header to be used by the file stealth routines. When infecting</FONT>
+<FONT SIZE=5>.COM files the Jackal checks for the .COM extension, when infecting .EXE files</FONT>
+<FONT SIZE=5>Jackal checks for 'MZ' or 'ZM' marker. When infecting .COM files Jackal avoids</FONT>
+<FONT SIZE=5>files beginning with suspicious code: If the first byte is 0 or NOP, HLT, CMC,</FONT>
+<FONT SIZE=5>CLC, STC or INT 20h (Terminate) instruction the file is avoided. Additionally</FONT>
+<FONT SIZE=5>if the file starts with &quot;MOV AH,4Ch&quot; or &quot;MOV AX,4Cxxh&quot; (Terminate Call), or</FONT>
+<FONT SIZE=5>&quot;MOV AH,09h&quot; or &quot;MOV AX,09xxh&quot; (Print string call) the file is avoided. This</FONT>
+<FONT SIZE=5>might be to avoid bait files. File stealth is performed on FCB</FONT>
+<FONT SIZE=5>FindFirst/FindNext calls, ASCII FindFirst/FindNext calls, read, write, lseek,</FONT>
+<FONT SIZE=5>and get/set date-stamp calls. In the case of FCB/ASCII FindFirst/FindNext</FONT>
+<FONT SIZE=5>calls, Jackal gets the current Disk Transfer Area (DTA) using INT 21h/AH=2Fh</FONT>
+<FONT SIZE=5>Jackal and hides the increase in file size and the 100 year marker in the file</FONT>
+<FONT SIZE=5>date-stamp In the case of read call, if all or part of the file header is</FONT>
+<FONT SIZE=5>read, Jackal replaces it with the original 'clean' header. If the read extends</FONT>
+<FONT SIZE=5>pass the end of the original file into the virus body Jackal truncates it at </FONT>
+<FONT SIZE=5>the end of the virus body. In the case of a write call, the file is</FONT>
+<FONT SIZE=5>disinfected on disk before the write is done. If an lseek call is issued</FONT>
+<FONT SIZE=5>relative to the end of an infected file, it is instead done relative to the</FONT>
+<FONT SIZE=5>end of the original file, before the virus body. In the case of requests to</FONT>
+<FONT SIZE=5>get the file date-stamp, Jackal hides the 100 year marker. In the case of </FONT>
+<FONT SIZE=5>requests to set the date-stamp, Jackal ensures the 100 year marker is set if</FONT>
+<FONT SIZE=5>the file is infected. Jackals INT 21h handler locks out they keyboard (Port</FONT>
+<FONT SIZE=5>21h - IRQ Enable Mask) and re-enables it on exiting. This means that if an</FONT>
+<FONT SIZE=5>anti-virus monitor brings up a message, the user cannot respond and must</FONT>
+<FONT SIZE=5>reboot. When exiting the INT 21h handler, Jackal single-steps (INT 01h) 5 </FONT>
+<FONT SIZE=5>instructions before returning to the next INT 21h handler in the chain. It</FONT>
+<FONT SIZE=5>is this INT 01h handler that resets the INT 21h JMP FAR patch (if used, see</FONT>
+<FONT SIZE=5>above). This seems to be an attempt to stop anti-virus software from tunnelling</FONT>
+<FONT SIZE=5>through its code. During INT 21h calls, Jackal points INT 24h (DOS Fatal Error</FONT>
+<FONT SIZE=5>Handler' to &quot;MOV AL,3 / IRET&quot; handler. This will return 'Fail' on fatal errors</FONT>
+<FONT SIZE=5>such as writing to a write-protected floppy, without any error messages.</FONT>
+<FONT SIZE=5>Jackal includes the text string:</FONT>
+
+<FONT SIZE=5><I>Ja?ck?al</I></FONT>
+
+<FONT SIZE=5>where '?' are extended ASCII characters. This is part of the code to load the</FONT>
+<FONT SIZE=5>BX/CX/DX registers for the virus residency check. [1] [7] [8] [18]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="predator"></a>
+<FONT SIZE=5><U><B>% Virus: Predator %</B></U></FONT>
+
+<FONT SIZE=5>Upon joining Phalcon/SKISM, Priest published the 'Predator' virus in 40-Hex</FONT>
+<FONT SIZE=5>Issue 11. Predator was a memory-resident, encrypted, stealth infecter of</FONT>
+<FONT SIZE=5>MS-DOS .COM files. Predator also contained a dangerous payload. When ever a</FONT>
+<FONT SIZE=5>'random' number is need for Predators encryption or payload, the 16-bit WORD</FONT>
+<FONT SIZE=5>at 0:416h (low word of timer ticks) is used. When a Predator infected file is</FONT>
+<FONT SIZE=5>run, the virus decrypts itself then passes control to the decrypted virus body</FONT>
+<FONT SIZE=5>which immediately restores the stack pointer (SP register) to its original</FONT>
+<FONT SIZE=5>value. Predator then issues an INT 21h call to check if it is already memory-</FONT>
+<FONT SIZE=5>resident. If this is the case, Predator immediately returns control back to</FONT>
+<FONT SIZE=5>the original host. Otherwise, Predator goes memory resident: Predator checks</FONT>
+<FONT SIZE=5>if the MCB (Memory Control Block) of the host is the last in the chain. If</FONT>
+<FONT SIZE=5>it is not then return is controlled to the host. Predator then goes memory</FONT>
+<FONT SIZE=5>resident by reducing the size of this MCB as well as the 16-BIT WORD at 0:413h</FONT>
+<FONT SIZE=5>(BIOS size of convention memory) to allocate memory. The virus then copies its</FONT>
+<FONT SIZE=5>self to this newly allocated memory and jumps to it to continue execution.</FONT>
+<FONT SIZE=5>Predator then hooks INT 21h (MS-DOS API) and INT 13h (BIOS Disk Services).</FONT>
+<FONT SIZE=5>INT 21h/AH=35h (Get Interrupt Vector) is used to retrieve original interrupt</FONT>
+<FONT SIZE=5>values and then INT 21h/AH=25h (Set Interrupt Vector) is used to hook these</FONT>
+<FONT SIZE=5>interrupts. Predator then sets the 'count down' variable for the payload to</FONT>
+<FONT SIZE=5>a random value and returns control to the host. The INT 21h handler is used</FONT>
+<FONT SIZE=5>to infect files and implement stealth routines and provide Predators residency</FONT>
+<FONT SIZE=5>check. The INT 13h is used solely for Predators destructive payload. The</FONT>
+<FONT SIZE=5>INT 21h handler infected files on open, extended open and execute calls.</FONT>
+<FONT SIZE=5>Stealth routines are provided on FCB and ASCII FindFirst/FindNext calls and on</FONT>
+<FONT SIZE=5>FCB Open call. Stealth is implemented the same way on all of these calls: the</FONT>
+<FONT SIZE=5>file size is reduced to the original file size, and Predators 'infection</FONT>
+<FONT SIZE=5>marker' in the date-stamp field is removed. When infecting files Predator</FONT>
+<FONT SIZE=5>checks for the '.COM' extension (upper-case only) as well as the absence of the</FONT>
+<FONT SIZE=5>'MZ' marker. Predator is encrypted in all file infections. Infected files are</FONT>
+<FONT SIZE=5>marked as infected by adding 100 years to their date-stamp The destructive</FONT>
+<FONT SIZE=5>payload of the INT 13h handler randomly inverts one bit on sector reads. On</FONT>
+<FONT SIZE=5>INT 13h/AH=02h, Predator performs the read and then subtracts the number of</FONT>
+<FONT SIZE=5>sectors read from the payloads 'count down' variable. When this variable</FONT>
+<FONT SIZE=5>becomes less than or equal to zero the payload is implemented: A random 16-bit</FONT>
+<FONT SIZE=5>WORD in the read buffer is chosen, a random bit in this word is complemented</FONT>
+<FONT SIZE=5>and the 'count down' variable is reset to a new random value. Predator</FONT>
+<FONT SIZE=5>includes the text string:</FONT>
+
+<FONT SIZE=5><I>Predator virus  (c) Mar. 93  Priest</I></FONT>
+
+<FONT SIZE=5>[9] [10]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="predator2"></a>
+<FONT SIZE=5><U><B>% Virus: Predator 2 %</B></U></FONT>
+
+<FONT SIZE=5>Although Predator was relatively simple, it was soon followed by 'Predator 2'.</FONT>
+<FONT SIZE=5>Predator 2 was a more complex semi-polymorphic stealth multipartite infecter</FONT>
+<FONT SIZE=5>of MS-DOS .com and .exe files, floppy boot sectors and the MBR. Like many of</FONT>
+<FONT SIZE=5>Priests viruses, Predator 2 tunnels interrupts 13h and 21h on execution of an</FONT>
+<FONT SIZE=5>infected file, in an attempt to bypass anti-virus software. On execution of an</FONT>
+<FONT SIZE=5>infected file Predator 2 hit the MBR then went memory resident. Upon booting</FONT>
+<FONT SIZE=5>from an infected MBR/boot sector, the virus also went memory resident. Once</FONT>
+<FONT SIZE=5>resident the virus hooked INT 21h to hit files and INT 13h to hit floppy boot</FONT>
+<FONT SIZE=5>sectors. These interrupts were also used for Predator 2's stealth routines.</FONT>
+<FONT SIZE=5>When going resident under MS-DOS, rather than placing a hook in the INT 21h</FONT>
+<FONT SIZE=5>vector chain, Predator 2 patches the tunnelled INT 21h address with an 0EAh </FONT>
+<FONT SIZE=5>(JMP FAR) instruction pointing to the virus handler. When infecting files</FONT>
+<FONT SIZE=5>Predator 2 checks for the file names of several anti-virus programs and does</FONT>
+<FONT SIZE=5>not infect them. These names are stored backwards in a single string:</FONT>
+<FONT SIZE=5>&quot;TORPNACSAELCFASVVAPC.VANOCED&quot;- PROT, SCAN, CLEA*, VSAF, CPAV, NAV,</FONT>
+<FONT SIZE=5>and DECO respectively. Predator 2 includes the text strings:</FONT>
+
+<FONT SIZE=5><I>Predator virus #2  (c) 1993  Priest - Phalcon/Skism</I></FONT>
+<FONT SIZE=5><I>THE PREDATOR</I></FONT>
+
+<FONT SIZE=5>[10] [11] [12]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="incubus"></a>
+<FONT SIZE=5><U><B>% Virus: Incubus %</B></U></FONT>
+
+<FONT SIZE=5>Around this time Priest also wrote 'Incubus'. Incubus.a was a memory-resident</FONT>
+<FONT SIZE=5>infecter of the MBR and floppy disk boot sectors. Rather than replacing the</FONT>
+<FONT SIZE=5>original boot sector with the virus code and storing the original sector else</FONT>
+<FONT SIZE=5>where on disk, Incubus copied a small 26-byte 'loader' stub over the original</FONT>
+<FONT SIZE=5>code of the sector, saved the original 26-bytes of the sector in the virus</FONT>
+<FONT SIZE=5>body and wrote the full virus else where on the disk. Infected sectors began</FONT>
+<FONT SIZE=5>with a two byte JMP $+3C (0EBh 3Ch) which passed control to the loader stub</FONT>
+<FONT SIZE=5>at 0:7C3Eh (boot sectors are loaded at 0:7C00h). The small size and position</FONT>
+<FONT SIZE=5>of this stub meant that it sat after the BPB (BIOS Parameter Block) on floppy</FONT>
+<FONT SIZE=5>disks and before the partition table on the MBR. In floppy disk infections</FONT>
+<FONT SIZE=5>Incubus stored the full virus body in the last sector of the disk. This was</FONT>
+<FONT SIZE=5>calculated using the 'NumSectors', 'SectorsPerTrack' and 'NumberOfHeads'</FONT>
+<FONT SIZE=5>fields of the BPB. For MBR infections, Incubus stored the main virus body</FONT>
+<FONT SIZE=5>in the last sector of the first cylinder of the hard disk (this was unused</FONT>
+<FONT SIZE=5>under MS-DOS). The last sector of the cylinder was calculated by taking</FONT>
+<FONT SIZE=5>the last cylinder/sector field (+06h) of the first partition entry (+1BEh)</FONT>
+<FONT SIZE=5>and then clearing all but the lower 6-bits (sector only). The 26-byte virus</FONT>
+<FONT SIZE=5>loader setup the machine stack and then loaded the virus from the appropriate</FONT>
+<FONT SIZE=5>sector to 0:7E00h (immediately after the original boot sector). The majority</FONT>
+<FONT SIZE=5>of the code used by Incubus before memory-residency is encrypted - in all 202</FONT>
+<FONT SIZE=5>bytes. This encrypted portion of the code includes a copy of the 26-byte</FONT>
+<FONT SIZE=5>loader, the original code of the infected boot sector that was patched, the</FONT>
+<FONT SIZE=5>code to infect the MBR and the code to go memory-resident. Incubus uses 300</FONT>
+<FONT SIZE=5>bytes of the virus that are not encrypted to calculate the encryption key.</FONT>
+<FONT SIZE=5>This unencrypted code includes the INT 40h handler, encryption/decryption </FONT>
+<FONT SIZE=5>routine and the routine to calculate the key, and the routines to patch the</FONT>
+<FONT SIZE=5>sector with the loader and to calculate the last sector of the floppy. Incubus</FONT>
+<FONT SIZE=5>also stores a 'random' 16-bit value in this decrypted code taken from 0:46Ch</FONT>
+<FONT SIZE=5>(BIOS timer ticks) to make the key more random. Before patching a sector with</FONT>
+<FONT SIZE=5>the loader Incubus compares 17 bytes of the sector with the first 17 bytes of</FONT>
+<FONT SIZE=5>the loader to check if it is already infected. When Incubus is loaded to</FONT>
+<FONT SIZE=5>0:7E00h and executed it immediately sets the DS register and decrypts itself.</FONT>
+<FONT SIZE=5>The virus next restores the original bytes patched with the JMP and the loader</FONT>
+<FONT SIZE=5>of the boot sector at 0:7C00h. The image of the sector is now its original.</FONT>
+<FONT SIZE=5>Incubus allocates 1kb of memory for itself by reducing the word at 0:413h</FONT>
+<FONT SIZE=5>(BIOS size of conventional memory), copies itself to this newly allocated</FONT>
+<FONT SIZE=5>memory and hooks INT 40h (BIOS Floppy Disk Services). Other strains of Incubus</FONT>
+<FONT SIZE=5>may hook INT 13h (BIOS Disk Services). Incubus will now jump to the new copy</FONT>
+<FONT SIZE=5>of the virus at the top of memory and proceed to infect the MBR. The original</FONT>
+<FONT SIZE=5>MBR code is saved and patched with the JMP/loader and the virus is written to</FONT>
+<FONT SIZE=5>the last sector of the first cylinder. After infecting the MBR, control is </FONT>
+<FONT SIZE=5>returned back to the original (restored) boot sector at 0:7C00h. The INT 40h</FONT>
+<FONT SIZE=5>(or INT 13h) handler is used solely to infect floppy disks. Floppy boot</FONT>
+<FONT SIZE=5>sectors are infected when a read attempt of exactly one sector is made from</FONT>
+<FONT SIZE=5>the boot sector (head 0, cylinder 0, sector 1). On infecting a floppy, the</FONT>
+<FONT SIZE=5>original code is saved in the virus body, the boot sector is patched and</FONT>
+<FONT SIZE=5>written and the virus is saved in the last sector of the disk. Incubus</FONT>
+<FONT SIZE=5>includes the (encrypted) text string:</FONT>
+
+<FONT SIZE=5><I>Incubus PRiEST - Phalcon/Skism</I></FONT>
+
+<FONT SIZE=5>[1] [5] [17]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="natas"></a>
+<FONT SIZE=5><U><B>% Virus: Natas %</B></U></FONT>
+
+<FONT SIZE=5>In 1994 Priest published what seemed to be his last virus, 'Natas'. Aside from</FONT>
+<FONT SIZE=5>publishing the virus source code in 40-Hex Issue 12, Priest also provided his</FONT>
+<FONT SIZE=5>friends, the U.S. Secret Service, with a copy. Natas was a memory-resident </FONT>
+<FONT SIZE=5>full-stealth, highly polymorphic, multipartite infecter of MS-DOS .COM and</FONT>
+<FONT SIZE=5>.EXE files, as well as floppy boot sectors and the MBR. Natas was the third</FONT>
+<FONT SIZE=5>virus to be both full-stealth and polymorphic at the same time, after 'Tremor'</FONT>
+<FONT SIZE=5>and 'Neuroquilla' (aka Havoc). Natas contained a highly destructive payload:</FONT>
+<FONT SIZE=5>With 1/512 chance when run from an infected MBR or when an infected file was</FONT>
+<FONT SIZE=5>run under 'TBCLEAN' (ThunderByte Anti-virus) Natas would format all hard drives</FONT>
+<FONT SIZE=5>present, the entire drive one at a time. When a Natas infected disk was</FONT>
+<FONT SIZE=5>booted, a small loader placed in the boot sector/MBR will run. It will first</FONT>
+<FONT SIZE=5>issues a 'CALL' instruction to place the loaders 'delta offset' on the stack.</FONT>
+<FONT SIZE=5>This is because the loader can be at a different position on different disks:</FONT>
+<FONT SIZE=5>When infecting the boot sector/MBR, Natas follows any JMP SHORT (0EBh) or</FONT>
+<FONT SIZE=5>JMP NEAR (0E9h) instructions and places the loader at the destination. This</FONT>
+<FONT SIZE=5>allows the loader to be at the normal start of the sector for MBR infections</FONT>
+<FONT SIZE=5>and after the BPB (BIOS Parameter Block) for floppy infections. The loader</FONT>
+<FONT SIZE=5>then allocates 6kb of memory by reducing the word at 40:13h (BIOS size of</FONT>
+<FONT SIZE=5>conventional memory) and loads 9 sectors containing the real 'virus body'</FONT>
+<FONT SIZE=5>to this newly allocated memory. Natas then jumps to this new copy of the</FONT>
+<FONT SIZE=5>virus in memory. If any errors are encountered in the 'loader' code, an</FONT>
+<FONT SIZE=5>INT 18h (Boot ROM BASIC) is issued. Natas's boot process continues by</FONT>
+<FONT SIZE=5>storing the original INT 13h, INT 15h, INT 21h and INT 40h vector. INT 13h</FONT>
+<FONT SIZE=5>(BIOS Disk Services) is used instead of INT 40h (BIOS Floppy Disk Services)</FONT>
+<FONT SIZE=5>if the byte at 40:75h (BIOS number of hard drives) is non-zero. Next Natas</FONT>
+<FONT SIZE=5>pops the 'delta offset' of the loader stub off the stack and sets two flags:</FONT>
+<FONT SIZE=5>INT 13h handler should check for MS-DOS loading, and virus is run from 'boot'</FONT>
+<FONT SIZE=5>infection. The bytes of the boot sector that were replaced with the virus</FONT>
+<FONT SIZE=5>loader are decrypted from the virus body and the boot sector is corrected in</FONT>
+<FONT SIZE=5>memory. Natas then hooks INT 13h and infects the MBR. When infecting the MBR</FONT>
+<FONT SIZE=5>Natas first reads the original MBR and performs 2 checks: Is the drive already</FONT>
+<FONT SIZE=5>infected with 'Jackal' (see above) and does the drive have enough sectors per</FONT>
+<FONT SIZE=5>track to hold store the virus body on the first cylinder after the MBR. This</FONT>
+<FONT SIZE=5>second check is performed by querying the 'end sector, track' field of the</FONT>
+<FONT SIZE=5>first Partition entry. If the MBR passes these checks the MBR is checked to</FONT>
+<FONT SIZE=5>be 'bootable' (0AA55h marker at end of sector), 2 16-bit words in the virus</FONT>
+<FONT SIZE=5>boot loader code are patched to point to head/cylinder/sector of the virus</FONT>
+<FONT SIZE=5>body to be stored on the disk (last sectors of the first head/cylinder) and</FONT>
+<FONT SIZE=5>the original MBR is patched with the virus loader. When patching a boot sector</FONT>
+<FONT SIZE=5>or MBR with the virus loader Natas follows any JMP instructions at the start</FONT>
+<FONT SIZE=5>of the sector (see above) saves the bytes to be over written (encrypted in the</FONT>
+<FONT SIZE=5>main virus body) then copies over a small portion of the original sector with</FONT>
+<FONT SIZE=5>the loader. After this point of the Natas's boot process, the virus if loaded</FONT>
+<FONT SIZE=5>from a hard drive formats all hard drives with 1/512 possibility) then returns</FONT>
+<FONT SIZE=5>control to the original boot sector/MBR. The INT 13h handler of Natas serves 3</FONT>
+<FONT SIZE=5>purposes: To hook INT 21h during boot-up when MS-DOS loads, to provides stealth</FONT>
+<FONT SIZE=5>routines and to infect floppies. If checking for MS-DOS is enabled the INT 13h</FONT>
+<FONT SIZE=5>handler always begins by checking if the segment of INT 21h in the IVT</FONT>
+<FONT SIZE=5>(interrupt vector table) is equal to or below 800h. If it is and this segment</FONT>
+<FONT SIZE=5>is writeable INT 21h is hooked: Natas installs its INT 21h handler in the IVT</FONT>
+<FONT SIZE=5>and disables this INT 21h checking code in future INT 13h calls. Both</FONT>
+<FONT SIZE=5>infection and stealth are performed on reads from the boot sector/MBR. In </FONT>
+<FONT SIZE=5>such a case the call is performed to read the sector (exiting on error) and</FONT>
+<FONT SIZE=5>stealth is performed if the sector is infected, while infection is performed</FONT>
+<FONT SIZE=5>if the sector is not infected and on a floppy disk. Floppy infection is very</FONT>
+<FONT SIZE=5>similar to MBR infection (see above) except the full 'virus body' is placed</FONT>
+<FONT SIZE=5>on the last cylinder of the last track of the disk. This address is calculated</FONT>
+<FONT SIZE=5>using the BPB (BIOS Parameter Block) of the boot sector. Stealth is performed</FONT>
+<FONT SIZE=5>by performing the read of the infected sector and then reading the first</FONT>
+<FONT SIZE=5>sector of the virus body, as pointed to by the virus loader of the infected</FONT>
+<FONT SIZE=5>sector. This first sector of the virus body contains the encrypted 'original'</FONT>
+<FONT SIZE=5>bytes that were replaced with the loader and these bytes are decrypted to the</FONT>
+<FONT SIZE=5>callers read buffer, making the sector appear 'clean'. During stealth and</FONT>
+<FONT SIZE=5>infection of sectors, the BIOS 'INT 13h' handler is used for hard drives while</FONT>
+<FONT SIZE=5>the BIOS 'INT 40h' handler is used for floppies. When MS-DOS is present,</FONT>
+<FONT SIZE=5>the MS-DOS INT 13h handler is hooked rather than the BIOS INT 13h handler, and</FONT>
+<FONT SIZE=5>instead of hooking INT 13h and INT 21h vectors, the first 5 bytes of these</FONT>
+<FONT SIZE=5>handlers are patched with a 5-byte JMP FAR (0EAh) to the appropriate</FONT>
+<FONT SIZE=5>virus handler. When a Natas infected file is run, the virus saves the 'DS'</FONT>
+<FONT SIZE=5>register on the stack and calculates the infections 'delta offset'. Natas then</FONT>
+<FONT SIZE=5>checks for and disables 'TBCLEAN' - the generic file disinfection utility of</FONT>
+<FONT SIZE=5>the ThunderByte Anti-Virus suite. The virus clears TF (trace flag of the</FONT>
+<FONT SIZE=5>'flags' register) and sees if it is reset after a 'POP SS' instruction. If</FONT>
+<FONT SIZE=5>TBCLEAN is detected, Natas disables it by disabling interrupts ('CLI'</FONT>
+<FONT SIZE=5>instruction, changing 'SS' segment register to 0, reading the address of the</FONT>
+<FONT SIZE=5>TBCLEAN INT 01h (single-stepping) handler with an 'LES' instruction relative</FONT>
+<FONT SIZE=5>to 'BP' and patching the handler with an 'IRET' (0CFh) instruction. If TBCLEAN</FONT>
+<FONT SIZE=5>was detected, Natas continues with special action: the virus does not perform</FONT>
+<FONT SIZE=5>its MS-DOS residency check or inspect the MCB (Memory Control Block). It then</FONT>
+<FONT SIZE=5>performs the same as the code would without TBCLEAN, but at the end it does</FONT>
+<FONT SIZE=5>not return control to the host - it goes to routine to format hard drives.</FONT>
+<FONT SIZE=5>Hence users attempting to clean files with TBCLEAN will experience loss of</FONT>
+<FONT SIZE=5>data. If TBCLEAN is not detected however, Natas continues going resident.</FONT>
+<FONT SIZE=5>Natas performs its memory-residency check and checks if the host MCB is the</FONT>
+<FONT SIZE=5>last in the chain. If either of these cases fail residency is passed on to the</FONT>
+<FONT SIZE=5>host file. Next Natas allocates memory by reducing the size of the MCB of the</FONT>
+<FONT SIZE=5>host and also reduces the 'top of memory' field of the host PSP (Program</FONT>
+<FONT SIZE=5>Segment Prefix) and 16-bit WORD at 0:413h (BIOS size of conventional memory).</FONT>
+<FONT SIZE=5>Natas copies itself to this newly allocated memory and jumps to it. Natas sets</FONT>
+<FONT SIZE=5>a flag to indicate it is running from a file (as opposed to a sector) and</FONT>
+<FONT SIZE=5>with 1/3 probability sets a flag to disable file 'stealth' routines when</FONT>
+<FONT SIZE=5>'special' programs are running. Natas prepares 2 JMP FAR (0EAh) constructions:</FONT>
+<FONT SIZE=5>one to jump to virus INT 13h handler, one to jump to virus INT 21h handler</FONT>
+<FONT SIZE=5>(see above). Next several interrupts are 'tunnelled' using INT 01h single-</FONT>
+<FONT SIZE=5>stepping. Natas call INT 21h/AH=52h (DOS List Of Lists) to obtain the segment</FONT>
+<FONT SIZE=5>of the first MCB. Anything below this segment is considered as belonging to</FONT>
+<FONT SIZE=5>DOS. Natas tunnels for: MS-DOS INT 13h and INT 21h and BIOS INT 13h, INT 15h,</FONT>
+<FONT SIZE=5>INT 40h handlers. MS-DOS interrupts are saved when code segment is below</FONT>
+<FONT SIZE=5>segment of the first MCB. BIOS interrupts are saved if the code segment is</FONT>
+<FONT SIZE=5>between 0C800h and 0F400h. MS-DOS interrupts are used for JMP FAR virus hooks.</FONT>
+<FONT SIZE=5>BIOS interrupts are used to bypass anti-virus software when infecting files.</FONT>
+<FONT SIZE=5>The INT 01h handler used by Natas to tunnel, emulates several instructions:</FONT>
+<FONT SIZE=5>'PUSHF', 'POPF', 'IRET', 'INT xx', 'INT3' and 'INTO'. In the case of these</FONT>
+<FONT SIZE=5>instructions Natas attempts to hide the 'TF' flag, while keeping it from being</FONT>
+<FONT SIZE=5>cleared. Natas then patches DOS INT 13h and INT 21h handlers if both have been</FONT>
+<FONT SIZE=5>found and infects the first hard drives MBR, in the manner described above for</FONT>
+<FONT SIZE=5>'sector' infections. When infecting the MBR from a file Natas uses the</FONT>
+<FONT SIZE=5>tunnelled BIOS INT 13h handler. Natas then returns control to the host. The</FONT>
+<FONT SIZE=5>INT 21h handler of Natas is used for 3 purposes: memory-residency check, file</FONT>
+<FONT SIZE=5>infection and file stealth. Natas INT 21h hander setup its own stack and set</FONT>
+<FONT SIZE=5>INT 24h (DOS Critical Error Handler) to 'MOV AL,03h / IRET' to disable error</FONT>
+<FONT SIZE=5>messages when trying to infect a file on a write-protected floppy. The INT 21h</FONT>
+<FONT SIZE=5>handler also locked the keyboard by disabling its IRQ (Port 21h - Hardware</FONT>
+<FONT SIZE=5>Interrupt Enable Mask). This made Natas harder to debug, but also stopped the</FONT>
+<FONT SIZE=5>user to responding to any memory-resident anti-virus software that might bring</FONT>
+<FONT SIZE=5>up a warning during virus activity. When infecting files Natas did some</FONT>
+<FONT SIZE=5>unusual things: The handle to be infected was 'duplicated' first</FONT>
+<FONT SIZE=5>(INT 21h/AH=45h), INT 21h,13h,15h,40h were to original or tunnelled values to</FONT>
+<FONT SIZE=5>bypass anti-virus software and restored after infection, and SFT (System File</FONT>
+<FONT SIZE=5>Entries) were used to reduce code size and bypass anti-virus software. The</FONT>
+<FONT SIZE=5>routine used to get the SFT of the handle also ensured the file was not a</FONT>
+<FONT SIZE=5>device and checked if it was already infected. SFT entries were used instead</FONT>
+<FONT SIZE=5>of lseek, chmod and time/date-stamp calls bypassing some anti-virus monitors.</FONT>
+<FONT SIZE=5>They were also used in stealth routines. If the drive of the victim file was</FONT>
+<FONT SIZE=5>deemed 'removal' and 'A:' or 'B:' Natas reads a sector then rewrites it using</FONT>
+<FONT SIZE=5>INT 13h to check if the disk is write protected. Files are opened 'read only'</FONT>
+<FONT SIZE=5>then the file mode in the SFT structure is set to 'read/write', also bypassing</FONT>
+<FONT SIZE=5>some anti-virus software. Infection algorithms are fairly standard with Natas</FONT>
+<FONT SIZE=5>appending itself to the end of the file with a fixed length polymorphic</FONT>
+<FONT SIZE=5>decrypter and modifying the files header. Files are marked as infected by</FONT>
+<FONT SIZE=5>adding 100 years to the date-stamp .COM files are identified by file</FONT>
+<FONT SIZE=5>extension, while .EXE files are identified by presence of 'MZ' or 'ZM'</FONT>
+<FONT SIZE=5>marker. Stealth routines are used on FCB/ASCII FindFirst/FindNext calls, lseek,</FONT>
+<FONT SIZE=5>read, write and set/get date calls. On FindFirst/FindNext calls Natas hides</FONT>
+<FONT SIZE=5>the increase in file length and the modified dates-tamp field. In the case of</FONT>
+<FONT SIZE=5>lseek calls, if the seek origin is from the end of file, the seek is performed</FONT>
+<FONT SIZE=5>relative to the uninfected file end. On read calls Natas truncates reads pass</FONT>
+<FONT SIZE=5>the end of the original file into the virus, and replaces reads from the</FONT>
+<FONT SIZE=5>infected file header at the start of the file with the original header. On</FONT>
+<FONT SIZE=5>writing to an infected file, Natas disinfects it first. Natas takes some</FONT>
+<FONT SIZE=5>special action for stealth routines depending on the program running. If</FONT>
+<FONT SIZE=5>'chkdsk' is running Natas disables FCB FindFirst/FindNext calls. This stops</FONT>
+<FONT SIZE=5>check disk reporting file allocation errors on infected files. With 1/3 </FONT>
+<FONT SIZE=5>probability at install time (see above) Natas disables all stealth routines</FONT>
+<FONT SIZE=5>when certain programs are running. These programs are: AR* (ARJ), LH* (LHA),</FONT>
+<FONT SIZE=5>(PK*) PKZIP, *BACK* (BACKUP) and *MODEM*. Natas uses the name of the MCB</FONT>
+<FONT SIZE=5>associated with the current PSP (INT 21h/AH=62h - get current PSP). When </FONT>
+<FONT SIZE=5>exiting the INT 21h handler and if installed from a file infection, Natas</FONT>
+<FONT SIZE=5>single-steps (INT 01h tracing) 5 instructions of code. On the fifth</FONT>
+<FONT SIZE=5>instruction the 'JMP FAR' INT 21h patch is re-patched. This seems to stop</FONT>
+<FONT SIZE=5>some programs from tunnelling past its INT 21h handler. The polymorphic engine</FONT>
+<FONT SIZE=5>of Natas was complex for its time. Natas decryptors were always forward on</FONT>
+<FONT SIZE=5>16-Bit words and used 3 or 4 registers: 1 or 2 pointer registers, a key</FONT>
+<FONT SIZE=5>register and a count register. All single or dual-register addressing modes</FONT>
+<FONT SIZE=5>could be used with 0/8/16-bit displacement. Encryption was in the form of</FONT>
+<FONT SIZE=5>&quot;ADD/SUB/XOR/ADC/SBB [PTR],KEY&quot;, or possibly &quot;ROL/ROR [PTR],CL&quot; if CX is the</FONT>
+<FONT SIZE=5>count register. The key register is optionally modified with an </FONT>
+<FONT SIZE=5>&quot;ADD/XOR/OR KEY,IMM16&quot;, an ADD made of multiple instructions, </FONT>
+<FONT SIZE=5>&quot;ROL/ROR KEY,1/CL&quot; (CL if CX is count) or &quot;NOT/NEG KEY&quot;. The pointer is always</FONT>
+<FONT SIZE=5>incremented, the key is always decremented. When incrementing the pointer, one</FONT>
+<FONT SIZE=5>or both registers maybe incremented when dual-register addressing is used.</FONT>
+<FONT SIZE=5>Loop types used by Natas are JNE/JNS/JG/JGE with an optional explicit</FONT>
+<FONT SIZE=5>register test, JE/JS/JLE/JL follow by a JMP NEAR or LOOP/LOOPZ/LOOPNZ if CX is</FONT>
+<FONT SIZE=5>the count. Natas uses many different methods to load register values,</FONT>
+<FONT SIZE=5>increment the pointer or decrement the counter, and to test registers values.</FONT>
+<FONT SIZE=5>Natas is also able to generate many different junk instructions. The engine</FONT>
+<FONT SIZE=5>differentiates between .COM and .EXE infections and generates the correct</FONT>
+<FONT SIZE=5>segment override if needed. Natas includes the text string:</FONT>
+
+<FONT SIZE=5><I>Natas</I></FONT>
+
+<FONT SIZE=5>[1] [13] [14] [15] [16]</FONT>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+<a name="references"></a>
+<FONT SIZE=5><U><B>% References: %</B></U></FONT>
+
+<FONT SIZE=5>[1] A PRIEST DEPLOYS HIS SATANIC MINIONS, </FONT>
+<FONT SIZE=5>&quot;The Virus Creation Labs: A Journey Into the Underground&quot; (American Eagle, </FONT>
+<FONT SIZE=5>ISBN 0-929408-09-8).</FONT>
+
+<FONT SIZE=5><A HREF="http://download.adamas.ai/dlbase/Stuff/VX Heavens Library/static/vdat/llpriest.htm">http://download.adamas.ai/dlbase/Stuff/VX%20Heavens%20Library/static/vdat/llpriest.htm</A></FONT>
+
+<FONT SIZE=5>[2] Source Code.</FONT>
+
+<FONT SIZE=5>satanbug.asm</FONT>
+
+<FONT SIZE=5><A HREF="http://www.thehackademy.net/madchat/vxdevl/vxsrc/MS-Dos/">http://www.thehackademy.net/madchat/vxdevl/vxsrc/MS-Dos/</A></FONT>
+
+<FONT SIZE=5>[3] <A HREF="http://virus.wikia.com/wiki/SatanBug">http://virus.wikia.com/wiki/SatanBug</A></FONT>
+
+<FONT SIZE=5>[4] <A HREF="http://www.securelist.com/en/descriptions/old19521">http://www.securelist.com/en/descriptions/old19521</A></FONT>
+
+<FONT SIZE=5>[5] <A HREF="http://www.securelist.com/en/descriptions/old17163">http://www.securelist.com/en/descriptions/old17163</A></FONT>
+
+<FONT SIZE=5>[6] Disassembly.</FONT>
+
+<FONT SIZE=5>payback.asm</FONT>
+
+<FONT SIZE=5><A HREF="http://www.thehackademy.net/madchat/vxdevl/vxsrc/MS-Dos/">http://www.thehackademy.net/madchat/vxdevl/vxsrc/MS-Dos/</A></FONT>
+
+<FONT SIZE=5>[7] <A HREF="http://www.virus-database.com/description/1962-jackal.html">http://www.virus-database.com/description/1962-jackal.html</A></FONT>
+
+<FONT SIZE=5>[8] <A HREF="http://www.f-secure.com/v-descs/jackal.shtml">http://www.f-secure.com/v-descs/jackal.shtml</A></FONT>
+
+<FONT SIZE=5>[9] Predator Source Code.</FONT>
+<FONT SIZE=5>40-Hex Issue 11, File 008.</FONT>
+
+<FONT SIZE=5>[10] <A HREF="http://www.eset.com/us/threat-center/encyclopedia/threats/predator/">http://www.eset.com/us/threat-center/encyclopedia/threats/predator/</A></FONT>
+
+<FONT SIZE=5>[11] <A HREF="http://www.securelist.com/en/descriptions/old8752">http://www.securelist.com/en/descriptions/old8752</A></FONT>
+
+<FONT SIZE=5>[12] Virus Catalogue Entry: Predator.</FONT>
+
+<FONT SIZE=5><A HREF="http://agn-www.informatik.uni-hamburg.de/catalog/msdos/html/predator.htm">http://agn-www.informatik.uni-hamburg.de/catalog/msdos/html/predator.htm</A></FONT>
+
+<FONT SIZE=5>[13] Natas Source Code.</FONT>
+<FONT SIZE=5>40-Hex Issue 12, File 005.</FONT>
+
+<FONT SIZE=5>[14] <A HREF="http://www.f-secure.com/v-descs/natas.shtml">http://www.f-secure.com/v-descs/natas.shtml</A></FONT>
+
+<FONT SIZE=5>[15] <A HREF="http://virus.wikia.com/wiki/Natas">http://virus.wikia.com/wiki/Natas</A></FONT>
+
+<FONT SIZE=5>[16] <A HREF="http://www.csie.ntu.edu.tw/~wcchen/asm98/asm/proj/b85506050/ORIGIN/NATAS~1.HTM">http://www.csie.ntu.edu.tw/~wcchen/asm98/asm/proj/b85506050/ORIGIN/NATAS~1.HTM</A></FONT>
+
+<FONT SIZE=5>[17] Reversal of Virus.Boot.Incubus.a by JPanic (Thanks to hh86).</FONT>
+
+<FONT SIZE=5>[18] Reversal of Virus.Multi.Jackal.3101 by JPanic.</FONT></PRE>
+
+<FONT SIZE=3><a href="#top">Back to top</a></FONT>
+
+</BODY>
+</HTML>
