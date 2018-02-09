@@ -1,0 +1,137 @@
+                             Infecting PE files
+                             with Java Bytecode
+                                  by hh86
+
+
+About Sojourner
+
+This is my first Java Bytecode virus.   It is a direct action file infector
+of PE32 exe files in the current directory. The virus inserts a loader code
+and  the  Sojourner  virus  class at the end of the last section. It is the
+world's first Java Bytecode virus to infect PE32 exe files.
+
+
+What is it?
+
+Java Bytecode is the instruction set from the Java Virtual Machine.  We all
+know  that  Java  is  primary  language to compile its source code to  Java
+Bytecode. But there are other languages that  also  produce  Java  Bytecode
+(for example, Scala, Clojure, Groovy) and use the Java Virtual Machine.
+
+The binary  file produced that contains the code that is run by the virtual
+machine is the Class file.   Recently I learned how can you use the virtual
+machine from native programs (in  Java  they call "native" those files that
+belong to a operating system).  Since there is no Java virus to infect PE32
+executable files, I thought to make a low-level one. ;)
+
+
+How can we do that
+
+Firstly, we  need  to have a loader code that can run our class file in the
+infected file. Java  introduced  the  Java Native Interface in the 90s.  It
+allows  native  programs to execute Java classes.  We  have  to  create  an
+instance   of   the   Java   Virtual   Machine   using  JNI_CreateJavaVM().
+If successful, it returns  an interface from which we can load our class.
+
+We use DefineClass() method to load our class from memory, so we don't need
+to drop any file.  Then we use GetMethodID() to get the ID of the method we
+want to call.
+
+My class uses just one method "S".  The  class  does not contains any other
+method (that is, no main(), no constructors such as init()).  But before we
+can call our method we must initialize the class object.   Since we have no
+constructor  we  can  use AllocObject() that does not call  the constructor
+method, then we can proceed to call using CallVoidMethod().
+
+However, there  is  an advantage to have a constructor. Typically, you will
+see  the  use  of NewObject() instead of AllocObject(), this is because the
+former  does  calls  a constructor method (typically init()) that they must
+first get using Get****MethodID().  What  we  will do is to call our method
+instead using NewObject() as if it was the constructor.
+
+The code I wrote for this can be  used for different projects, but requires
+the Java Virtual Machine DLL to be in the same directory.  There is one way
+to locate it using the registry but I did not include such functionality in
+this code.
+
+Now that we know what the loader must do in an infected files, we  need  to
+work in the payload.
+
+
+Java Bytecode
+
+I wrote the code in Java Bytecode instead of Java programming language. For
+that I used Jasmin. With Jasmin we can code Java Bytecode at a source level
+and also decide some details of the class file.  I didn't optimize the code
+too much, but instead decided to make very specific optimizations. 
+
+Instead of using methods I used subroutines that are rare and might confuse
+some decompilers.  For example:
+
+        aload_3
+        iload_2                              ;IMAGE_NT_HEADERS
+        i2l
+        invokevirtual     java/io/RandomAccessFile.seek(J)V
+        jsr               file_read4
+        sipush            0x4550             ;IMAGE_NT_SIGNATURE
+        if_icmpne         close_fileobj
+
+Some  subroutines  return  the value via stack, this is to optimize and add
+further confusion since it's not explicitly pushed (or loaded). In order to
+save a couple  of bytes (instead of saving a value in a temporary register)
+I used a branch directly to what would be the "catch" code:
+
+        jsr               file_read2
+        dup                                  ;one to store, one to compare
+        sipush            0xe0
+        if_icmpne         catch_begin
+        iload_2                              ;IMAGE_NT_HEADERS.FileHeader.NumberOfSections - 1 * sizeof IMAGE_SECTION_HEADER
+        iadd                                 ;IMAGE_NT_HEADERS.FileHeader.SizeOfOptionalHeader + (IMAGE_NT_HEADERS.FileHeader.NumberOfSections - 1) * sizeof IMAGE_SECTION_HEADER
+        bipush            0x20               ;IMAGE_NT_HEADERS.OptionalHeader + sizeof IMAGE_SECTION_HEADER.Name
+        iadd
+        istore_2
+
+catch_begin:
+        pop
+
+close_fileobj:
+        aload_3
+        invokevirtual     java/io/RandomAccessFile.close()V
+
+It  might  be  possible  to  create  a  further confusion using jsr and ret
+instruction  in subroutine, to create a fake "finally" block of code, since
+compilers implemented those instruction for that purpose in JSE6.
+
+There are many more possibilities and approachs to the simple  techniques I
+used in the code (maybe instead of reading the target file sequentially, it
+could be read entirely to a single buffer which could be an array).
+
+
+Outro
+
+It is funny that for quite some time  Java viruses have been forgotten (but
+now instead you can see malware using Java code for nefarious purposes), in
+1998  the  virus  writer  Landing Camel,  began  his/her "Strange Brew" [1]
+research  that  became the world's fist Java viruses to infect class files.
+Recently, the  virus  writer R3s1stanc3 showed us a new technique to infect
+JAR (Java ARchive) files [2].  The virus was also written in Java.
+
+An attractive possibility is to create polymorphic viruses. There are tools
+to obfuscate class files, but they do just that. They can still be detected
+without forcing the anti-virus to dynamically analyse the code. 
+
+R3sistanc3's  work  uses the JavaCompiler class that can be used to compile
+Java source code.  Sufficiently  good  engine should be capable of generate
+source  code  that when compiled would use most of the instruction set. But
+to use the full potential, you must go low-level, and probably anti-viruses
+don't even support these techniques yet.
+
+Our work should be enough to understand and attack the basics.   Now we can
+only expect more complex Java viruses over time. :)  But we need to explore
+further.
+
+hh86
+27 August 2013
+
+[1] Strange Brew by Landing Camel http://spth.virii.lu/cb4/Brew/DOC/start.html
+[2] Infecting JAR-Files using the JavaCompiler Class by R3s1stanc3 http://spth.virii.lu/v3/vessel/display/articles/R3s1stanc3/javainfector_article.txt
