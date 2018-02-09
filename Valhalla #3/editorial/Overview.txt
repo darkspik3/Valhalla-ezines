@@ -1,0 +1,144 @@
+
+                              Contents Overview
+
+
+----------------------------------------------------------------[Editorial]
+
+Into Valhalla
+An introduction to the third issue of Valhalla by its editor hh86.
+
+Words From Second Part To Hell
+Words from Second Part To Hell to the readers.
+
+Words From herm1t
+Words from herm1t to the readers.
+
+
+Words From hh86
+Words from hh86 to the readers.
+
+
+Words From (o)
+Words from (o) to the readers.
+
+
+Words From R3s1stanc3
+Words from R3s1stanc3 to the readers.
+
+
+Back To The Future by Second Part To Hell
+A wondeful  look  into  interviews  made to virus writers from the past, in
+which  they  expressed their thoughts on how they imagined the viruses from
+the future to be.
+
+Contents Overview
+This.
+
+Contact Us!
+Contact information of the people in charge of Valhalla.
+
+
+-----------------------------------------------------------------[Articles]
+
+Metamorphism and Self-Compilation in JavaScript by SPTH
+A technical  description  of  the techniques employed by SPTH to create his
+new JScript JS.Transcriptase virus.
+
+Meta-Level Languages in Viruses by SPTH
+SPTH describes the use of meta-level lenguages in metamorphic viruses.
+
+
+GPGPU Using OpenGL by roy g biv
+roy g biv describes how he implements Graphic Processor Unit and OpenGL for
+encryption and decryption in his new W32.OGLe virus.
+
+
+Virtual Code Windows 7 Update by roy g biv
+roy g biv describes  his  Virtual Code technique, which has been updated to
+work on Windows 7 OS.
+
+
+Infection Using CFF Explorer Scripting by hh86
+hh86  describes  in  detail  how she implemented the CFF Explorer Scripting
+language  to  infect  executable files via command-line in her new W32.CFFE
+virus.
+
+
+Inline JScript For x86 Cryptography by hh86
+hh86 describes  how  she implemented the Microsoft ScriptControl for inline
+JScript  code  in her W32.Unit00 virus using an  implementation  of the RC4
+algorithm in script for encryption and decryption.  
+
+
+Debug Assisted Decoding by hh86
+hh86 describes how she implemented her own debugger for decoding in her new
+W32.Atlas virus.
+
+
+Noisy Waves: TRNG virus by (o)
+(o) describes  how  she implemented the WaveAudio functions to record audio
+as a source for random numbers in her first and new virus W32.Wave.
+
+Infecting JAR-Files using the JavaCompiler Class by R3s1stanc3
+R3s1stanc3 describes  how he implements the JavaCompiler Class to decompile
+JAR files and infect them with his new virus Java.JavaInfector.
+
+
+
+--------------------------------------------------------------------[Codes]
+
+
+JS.Transcriptase by SPTH
+SPTH  presents the source code of his creation:  the world's first  JScript
+self-compiling   (implementing its  own  meta-language)  metamorphic virus!
+
+
+W32.OGLe by roy g biv
+In Valhalla 2, roy g biv presented a mysterious preview of an upcoming code
+in which he was working.      Now he brings the full source code: it is the 
+world's first virus to use GPU with OpenGL for decryption.
+
+
+W32.Relock.B roy g biv
+This is an upgraded version of his W32.Relock  virus, which was the world's
+first virus to use virtual code. Unfortunately the old version did not work
+in Windows 7, but now it does.
+
+
+W32.CFFe by hh86
+hh86 presents  the world's first virus for a new and unlikely platform: the
+CFF Explorer's Scripting Language.
+
+
+W32.Unit00 by hh86
+hh86  presents  the source code of a virus capable of using inline  JScript
+to decrypt the code using the RC4 algorithm.
+
+
+W32.Atlas
+hh86  presents the source code of a virus which implements its own debugger
+to control the execution of a weird decoder.   This is also a remake of the
+W32.POSEY virus which was released in Valhalla 2.
+
+
+W32.Sigrún.C
+A new addition to the Sigrún viruses, which were released in Valhalla 1.
+hh86 presents the source code of the  variant C, which is the world's first
+virus to implement the AES128 algorithm using Intel AES-NI instruction set,
+and also implements a technique  in which the encryption code is mutated to
+a decryptor.
+
+
+W32.Wave by (o)
+(o) presents  the  source code of a virus which records background noise to
+use it as a source of random numbers for its XTEA encryption algorithm.
+
+
+Java.JavaInfector by R3s1stanc3
+R3s1stanc3  presents  the  source code of a virus to infect JAR files using
+the JavaCompiler Class.
+
+
+
+
+
