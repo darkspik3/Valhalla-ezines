@@ -1,0 +1,26 @@
+                                                                     
+                                                                     
+                                                                     
+                                             
+Welcome to Valhalla #3
+
+Most  people  reading  this  ezine  won't know me and there is a simple 
+reason for that: I'm only about half a year active in the VX scene.
+Until  now,  I  only releases my codes in one ezine (DarK-CodeZ #4 [1]) 
+and  some  codes  on  my  blog.  But  now I'm very proud to get my code 
+published  in  Valhalla  #3.  I  want  to  thank  everybody  who helped 
+producing  this  magazine  and  I  hope  we  get  to see some great new 
+techniques here.
+
+In the end I want to greet a few people:
+ SPTH		- thx for helping me with my article and telling me of Valhalla #3
+ hh86		- thx for the possibility to release my code here
+ herm1t		- even if I don't know you, I hope VXHeavens will be up again soon
+ Perforin	- hope we'll see more of your codes in EOF #4; see ya in January
+ 
+ 
+enjoy reading
+				R3s1stanc3 [vxnetw0rk]
+				r3s1stanc3@tormail.org - http://r3s1stanc3.virii.lu
+				
+[1]	DarK-CodeZ #4	http://ezine.vxnetw0rk.ws/mag4/

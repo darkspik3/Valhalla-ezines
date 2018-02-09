@@ -1,0 +1,73 @@
+Wohooo - into valhalla for the 3rd time :-o :) :D ;)
+
+
+Congratulations and thank you to hh86 for this awesome magazine! The project she
+has started about two years ago continues, and with it the possibility for
+motivated coders to release some cool new VX stuff.
+                       
+This is now actually the fourth e-zine of a series:
+- 01.01.2011: virus writing bulletin 2011 - valhalla #0 :-)
+- 05.08.2011: valhalla #1
+- 15.03.2012: valhalla #2
+- 21.12.2012: valhalla #3
+
+So thanks alot to hh86 for this zine again, and for the whole motivation last
+few months, and sharing all those fine ideas.
+
+Also thanks goes to roy g biv for being such a reliable contributor to the
+VX world for so many years (even you're taking longer to answere mails as usual
+recently, hope everything is good!).
+
+Hello and welcome to valhalla goes to r3s1stanc3 - hope you continue your nice
+projects! :)
+
+Hi as well goes to (o) - nice to have you on board. Cool true RNG. What about
+a QRNG next time? :)
+
+Thanks for the great interviews to Eric Filiol, Marc Stamp and VirusBuster!!! It
+is awesome that scientific reserachers looking at this nice topic as well, and
+having such great ideas and perspectives. I would suggest you to look at the
+topic of self-learning viruses as well - we need some new fresh ideas there :)
+
+Best greets and lot of thanks goes to herm1t, who has supported us for so many
+years! Its very sad what happend to you and our library this year - but i dont
+want to mention anything further, this should be a happy moment with good
+feelings only. I just hope everything works our fine for you very soon, and you
+can provide us again with this genious library and your great ideas/codes!
+
+After VX Heavens went done, and with it my homepage, Perforin was so nice to
+provide me a new nice place. Thanks alot for that! Wish you much luck with
+the future of DC! And continue those crazy projects like infecting Samson TVs :)
+
+Greets goes also to Peter Ferrie who enjoyed analysing our codes for some quite
+some time now (even if i have the feeling that he tries to fool us by mentioning
+bugs, mistakes in source-comments or even typos in the payload :D) - Keep up the
+good job!
+
+
+
+
+I guess there is nothing left to say - this release is an evidence that there
+are people interested in the original kind of virus-writing: the discovering of
+new techniques and methods to infect files, to find ways infiltrating new
+systems, to find novel concepts to hide code - to think about the future of
+self-replicating codes.
+
+We dont harm anybody! We do it because we enjoy it, and because we know other
+people enjoy it too. :)
+
+
+                              [ ][0][ ]
+                              [ ][ ][0]
+                              [0][0][0]
+
+
+
+
+I see the virus writing is alive.
+
+                                                      Second Part To Hell
+                           http://spth.virii.lu/ / sperl.thomas@gmail.com
+                                                            December 2012
+
+PS: Comments/ideas/suggestions/proposals/... are welcome :)
