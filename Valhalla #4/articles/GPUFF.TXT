@@ -1,0 +1,153 @@
+                                 GPU powered
+                                file infector
+                                   by hh86
+
+
+About Glados (B)
+
+This  is  my  second  virus to use NVIDIA CUDA capable GPU.  It is a direct
+action  file  infector  of  PE32  exe  files  in  the   current  directory,
+overwriting to their reloc data  if  present in the last section and enough
+to hold  the  virus  body. I call its infection engine "Vesper".  It is the
+world's first virus to infect files using the GPU.
+
+
+What is it?
+
+All  kind  of  things can be done with the GPU not just graphics,  video or
+image  processing.   GPU can be used for all kinds of  complex mathematical
+calculations at super  speed, and aid in  simulations and science research.
+But they can also be used in viruses. In  2012  roy g biv wrote the world's
+first  virus using GPGPU and OpenGL for decryption of the virus code.  Then
+I wrote a virus that uses CUDA capable GPUs to decrypt its body using a PTX
+decryptor.   GPU is also know for its use to break password hashes and even
+someone created a keylogger with it.
+
+GPUs are as described by Peter Ferrie in its analysis of roy g biv's virus:
+"unimaginable challenges for anti-malware emulators,  especially given that
+there  are  two  major  execution  environments  which have quite different
+behaviours".  Furthermore, while we know that the machine code used by CUDA
+GPU looks like, NVIDIA  has never made public any documentation  about  the
+format of the opcodes.
+
+Now I bring to you a file infector powered by the GPU. It took me months of
+slow research to write this thing. :)
+
+
+Find and mapping files
+
+Firstly we need to allocate device memory and write our virus code in there
+so that we can pass it to our kernel (a function  that  is  executed in the
+device).   Memory size for allocation must be 32-bit aligned.  So make sure
+that the virus code size is aligned, and to align the file size as well. As
+you  might  know, cuMemAlloc()  fails  if  size is 0, this is a nice way to 
+avoid mapping directories and also the files that are empty. 
+
+Once we have mapped the file, we copy its contents into the device  memory,
+after infection we copy the device memory back to the map memory, and unmap
+saving all alterations.
+
+
+Infecting the file - attempt 1
+
+When I  first tried this technique, everything went right until I wrote the
+code to copy the virus body into the host.  So, what went wrong?  There was
+a crash in the st(ore) instruction to copy the bytes to the host.  I  tried
+some  more  until  I eventually  noticed  that  at  one infection test, the  
+entrypoint in the host was set  correctly  but targeting code in the middle
+of some instruction. I went back to the documentation and rediscovered that
+ld (load) and st instructions must use aligned pointers, and they  have  to
+be aligned by the size of address (32-bit, in this case).
+
+The  documentation  states that what happens then is an undefined behavior:
+the GPU may fault, or silently align the value and proceed.   It seems that
+all fields the code accessed in the PE image where aligned because no fault
+occurred during ld and the GPU didn't align the pointer.
+
+There is  also  one  scary  effect using .u32 (32-bit unsigned int) type in
+ld/st when accessing misaligned memory: a driver crash.  You know  all kind
+of dramatic things happen when a driver crashes. So, use .u32 carefully.
+
+After  those  failures, I decided to fallback to the PTX decryptor project,
+and stored this as a "faulty-experiment".
+
+
+Infecting the file - attempt 2
+
+When writing the code for the PTX decryptor I learned that accessing memory
+using  .b8  type (byte) type in ld and st did not cause any  problem, which
+makes a lot of sense.  It  is  funny  I  didn't think accessing bytes at my
+first attempt, since I  tried to copy the virus using .b32 type,  that  is,
+32-bit at a time.  Maybe I would have never noticed the bug otherwise. ;)
+
+We  just  need  to write some functions to make safe ld/st, reading/writing
+one byte at a time and combine them as required.  This seems to be the most
+reliable solution so far.
+
+
+Infecting the file
+
+At  first  we check the DOS signature to be  "MZ", memory is aligned always
+here, so we check like this:
+
+        ld.param.b32      r2, [map];
+        ld.global.b16     r3, [r2];
+        setp.eq.b32       p, r3, 0x5a4d;
+@!p     exit;
+
+
+Then we fetch the e_lfanew field at offset 0x3c in the file.  It's aligned,
+so we check like this:
+
+        ld.global.b32     e_lfanew, [r2 + 0x3c];
+        add.u32           r2, r2, e_lfanew;
+
+r2 now is a pointer to the PE header.   The PE header in most cases will be
+aligned by default.  We need to support the case when it's not aligned, for
+that we will use functions to read and combine the bytes like this:
+
+.func (.reg .b32 r) d(.reg .b32 m, .reg .b32 o){
+        .reg .b32 a, b;
+
+        add.s32           m, m, o;
+        ld.global.b8      b, [m + 3];
+        shl.b32           a, b, 24;
+        ld.global.b8      b, [m + 2];
+        shl.b32           b, b, 16;
+        add.s32           a, a, b;
+        ld.global.b8      b, [m + 1];
+        shl.b32           b, b, 8;
+        add.s32           a, a, b;
+        ld.global.b8      b, [m];
+        add.s32           r, a, b;
+        ret;
+}
+
+And we call it like this:
+
+        call              (r3), d, (r2, 0);
+        setp.eq.b32       p, r3, 0x4550;
+@!p     exit;
+
+
+Outro
+
+The code uses a pretty straight forward and simple algorithm.  Due  to  its
+simplicity  only  minor modifications would be required to infect 64-bit PE
+files due to the versatility of the PTX language. Time consuming algorithms
+might beneficiate greatly from multi-threading with super processing power,
+and the various groups of instructions.
+
+While  the weakness lies in the PTX code itself because it can be retrieved
+and  understood  with  minor efforts, we'll soon change that by introducing
+the GPU machine code whithin the CPU machine code itself.
+
+
+Greetings
+
+This project was originally written as an experiment (I never  intended  to
+release it). So, I send special thanks to SPTH for motivating me to attempt
+to finish this code.
+
+hh86
+25 October 2013
