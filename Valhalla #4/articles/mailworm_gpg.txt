@@ -1,0 +1,106 @@
+#######################################
+#######################################
+#### Combining a mailworm with GPG ####
+#################### by R3s1stanc3 ####
+#######################################
+#######################################
+
+index:
+1. Intro
+2. Few Words About GPG
+3. The Idea
+4. Advantages
+5. How The Worm Works
+6. Conclusion
+
+
+1. Intro
+
+This  summer, the whistleblower Edward Snowden leaked secret documents,
+showing  that  we  are all spied on, by the NSA. Due to these leaks, we
+saw  a massive growth in users of encryption software, like GnuPG (GPG)
+and  others.  I  started  thinking  about different types of crypto and
+their problems (and in this case new toys for VXers).
+
+
+2. Few Words About GPG
+
+Most people may have heard of GPG/PGP. For those who don't, I'll give a
+really  short explanation. GPG is a asymmetric encryption method, using
+a  private  and  a  public  key. If somebody wants to send an encrypted 
+message  to  you,  he  needs your public key. Only your private key can 
+decrypt  messages  that  are  encrypted with your public key. (For more 
+information,  read  the Wikipedia article [0]). The public key is given
+to  everyone,  who  wants  to  send  you encrypted messages. One way of 
+exchanging  public  keys  is by uploading them to keyservers. Everybody 
+can  store  his/her public key on a keyserver and make it available for 
+anyone. These keyservers are our target today.
+
+
+3. The Idea
+
+Many keyservers have a webfrontent, that allows you to search keys. So
+I  got  the idea to search for random strings and recive the keys. The
+URL to do so, looks something like this:
+http://eu.pool.sks-keyservers.net/pks/lookup?search=<search_string>&op=get
+Every  public key contains the email address of it's owner (if the key
+is  used for mailing) and extracting that is really easy. So you could
+crawl through keyservers and collect a huge amount of email addresses.
+So,  why  not write a mail worm, that collects its victim addresses on
+keyservers.  But  it gets better than just having many victims for the
+worm.  You could use the keys, to encrypt the mails and that will have
+a few other advantages.
+
+4. Advantages
+
+When thinking about the advantages of an worm, that sends encrypted
+messages,  we  need  to  think  about why there are no big mailworm 
+outbreaks anymore. There are a few reasons:
+ - spam filters:
+ 	there is only a limited amount of messages, a worm can write.
+	these can be easily detected by spam filters
+ - online virus scans:
+ 	many mail provider scan every mail for viruses before sending
+	them  to  the  user. Once a worm is detected, it won't spread
+	anymore.
+ - users learn to think
+ 	every  child knows, that you shouldn't open a mail attachment
+	by a stranger :)
+
+So, how do we circumvent these problems?
+ - spam filters:
+ 	encrypted  messages  can't  be scaned by any filter. They are
+	just  some  rubbish,  nobody  exept  the owner of the private
+	key can read
+ - online virus scans:
+ 	same  es  for  the  encrypted messages: how would you scan an
+	encrypted file?
+ - users learn to think:
+ 	this  is  the  point,  where  I can't speak for everyone, but
+	for  me,  encrypted  mails  seem  way  more  trustworthy than
+	unecnrypted   ones.  With  a  bit  SE,  many  people  can  be
+	tricked into executing the attachment
+
+
+5. How The Worm Works
+
+This  is  more  of  a  POC  code.  It  doesn't  use any kind of social
+engineering.  It  just recives one random public key from a keyserver,
+extracts  the email address, encrypts one of two messages and attaches
+an encrypted copy of itself to the mail. After generating the mail, it
+is send to the owner of the key.
+
+
+6. Conclusion
+
+Maybe  we  will  see a cool new worm outbreak in the next time. If you
+look  for  a more efficent way to search for keys and send the worm to
+more than one victim, it may spread really wide.
+
+
+
+[0] Wikipedia - PGP   https://en.wikipedia.org/wiki/Pretty_Good_Privacy
+
+
+R3s1stanc3 [vxnetw0rk]								October, 2013
+r3s1stanc3@riseup.net - http://r3s1stanc3.me
