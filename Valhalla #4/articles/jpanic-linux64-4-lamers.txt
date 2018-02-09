@@ -1,0 +1,1123 @@
+% Linux x64 Infection for Lamers (by a Lamer) - JPanic 2013 %
+_____________________________________________________________
+
+% Contents %
+____________
+. Introduction.
+. Beginning: What goes x86 must come x64.
+. Beginning: Linux x64 System Calls.
+. Beginning: glibc Calls.
+. A Note: Signals
+. Beginning: Elf64 File Format.
+. Recommendations: Working with Elf64 Files.
+. Made Simple: Elf64 Executable infection.
+. Made Simple: Elf64 Relocatable infection.
+. prelink (-u): The challenge.
+. prelink (-u): What You Need To Know.
+. Made Simple: .got.plt hooks for per-process residency
+. Conclusions
+. Links
+
+% Introduction %
+________________
+
+This article was written to help people new to x64 Linux beginning writing
+viruses quickly and easily. While writing "Linux64.Retaliation" I have decided
+to share what I have learnt as a Linux novice while working on my second Linux
+infecter. Please do not expect to find cutting edge information in this
+document. I would like to express my gratitude to Herm1t for his help and time,
+and pointing me in the right direction while I learnt these things. I am sure
+many of these basic things could also be applied to x86 (32-bit) Linux as well.
+
+As as side note, I can not find any source code or articles on any exist Linux
+x64 viruses/worms - so I can discuss none in this article. If you know of any,
+please let me know.
+
+% Beginning: What goes x86 must come x64 %
+__________________________________________
+
+For those of you who have a background in x86 Linux viruses, this section just
+lets you know you have an easy path ahead of you. Writing an x64 Linux virus is
+no different from writing an x86 one.
+
+You will find Linux infrastructure is still very much the same - same system
+calls - just with different numbers and calling convention, same ELF format - 
+just with different field size, same programming technique - just with
+different architecture and registers. The layout of the file system is the
+same, the command line tools are the same etc.
+
+Small differences (mentioned above) include difference in system calls. Some
+system calls have been removed, mainly deprecated and obsolete ones. This is
+really a good thing, since it makes our lives easier when choosing the correct
+system call to use. System call numbers and calling convention have changed
+too, but the behaviour of each call is very much the same.
+
+The ELF64 format is very (very) similar to the ELF32 format, just with some
+different sized fields. You will find just about any infection method that is
+used on an ELF32 file will work with an ELF64 equivalent. Such things as .plt
+per-process residency will work too.
+
+x64 instruction set is not that different from x86: just some extra registers
+and instructions, some very small differences but the same basic instructions
+and registers are there.
+
+As a final note, let us consider Linux x86 (32-bit) virus 'Linux.Siilov'. This
+is a direct action and per-process resident ('execve' hook in .plt) ELF32
+infector. The virus is written about 90%+ in C with a small amount of inline
+assembler for system call macros and .plt hooks. If we were to change the
+inline assembler code, and use ELF64 structures in ELF32 structures - there
+is no reason the virus could not be an x64 infector. Of course - we could use
+some conditional defines in the C source code, and be able to compile both an
+x86 and x64 version. This is something for us to think about.
+
+
+% Beginning: Linux x64 System Calls %
+_________________________________________
+
+This section will focus on Linux system calls. Calls to the kernel in Linux are
+made using a 'SYSCALL' instruction. Think of this as very much like INT 80h in
+x86 Linux/BSD/OSX or interrupt calls in MS-DOS and Win16. The SYSCALL calling
+is as follows: the syscall number is loaded into RAX, arguments are loaded into
+their respective registers (see below) and the SYSCALL instruction is issued.
+Arguments are passed into registers: RDI, RSI, RDX, R10, R8, R9 in that order
+respectively. On return the return value is placed in RAX and registers RCX and
+R11 are clobbered. If the return value is between -4095 and -1 then an error
+has occurred - the error code can be retrieved by negating this value. I find
+the following procedure useful:
+
+; Returns CF on Error.
+_syscall_al:	xor	ah,ah
+_sycall:	; Save Regs clobbered by kernel.
+		push    rcx
+                push    r11
+		; Make the Call.
+		movzx	rax,ax
+		syscall
+		; Return CF on Error.
+		cmp	rax,-4095
+		cmc
+		; Restore Regs.
+		pop     r11
+                pop     rcx
+		retn
+
+This procedure will make a SYSCALL with the syscall number in AL or AX, saving
+the clobbered registers and returning the classic CF on error. While this may
+seem a lot of code, it really reduces code size since only AL or AX need to be
+loaded and you do not need to do the 'cmp rax,-4095' after each SYSCALL which
+would be longer than a 'CALL' instruction.
+
+You can obtain the number of any supported syscall here:
+
+'/usr/include/x86-64-linux-gnu/asm/unistd_64.h'
+
+Other useful information can be found in the directory of the above path and:
+
+'/usr/include/asm-generic'
+
+You can find information on the system calls you need to make from the 'man'
+pages, e.g. # man 2 pread
+
+Be warned that these man pages are technically for the 'glibc' versions of
+these calls (see the next section) but they still contain enough information to
+answer your questions.
+
+Most useful syscall's to us include:
+
+         0      - sys_read
+         1      - sys_write
+         2      - sys_open
+         3      - sys_close
+         4      - sys_stat (sys_newstat)
+         5      - sys_fstat (sys_newfstat)
+         6      - sys_lstat (sys_newlstat)
+         8      - sys_lseek
+         9      - sys_mmap
+        10      - sys_mprotect
+        11      - sys_munmap
+        13      - sys_rt_sigaction
+        14      - sys_rt_sigprocmask
+        15      - stub_rt_sigreturn
+        17      - sys_pread64
+        18      - sys_pwrite64
+        76      - sys_truncate
+        77      - sys_ftruncate
+        78      - sys_getdents
+        79      - sys_getcwd
+        80      - sys_chdir
+        81      - sys_fchdir
+        82      - sys_rename
+        85      - sys_creat
+        90      - sys_chmod
+        91      - sys_fchmod
+        92      - sys_chown
+        93      - sys_fchown
+       102      - sys_getuid
+       235      - sys_utime
+       
+When looking for man pages on these calls, remove the 'sys_' or 'sys_rt_' 
+prefixes. Note that many calls have a 'f' version that takes a file descriptor
+(fd - like a file handle in Windows) instead of a pathname. For example,
+sys_truncate will set the length of a file designated by name, while 
+sys_ftruncate does the same thing but on an open file designated by file
+descriptor, not path. 
+
+Open, read, write, lseek, close calls are for file I/O and should be self-
+explanatory. sys_creat is like sys_open but exclusively for creating a new 
+file. 
+
+sys_pread64 and sys_pwrite64 are useful too. They read or write from a file
+descriptor but with an extra argument specifying the origin (offset) of the
+read/write. This saves on 'lseek' calls. sys_pread64 and sys_pwrite64 do not
+modify the file pointer after a read/write.
+
+sys_stat, sys_fstat and sys_lstat return a 'stat' structure that gives us much
+useful information about the file such as length and permissions. This 'stat'
+structure is given at the end of this section.
+
+sys_mmap/sys_munmap can be used to memory-map a file, but also very useful to 
+allocate memory using MAP_PRIVATE and MAP_ANONYMOUS. sys_mprotect can modify 
+read/write/execute permissions of an area of memory - I find this useful for 
+making the .text section writeable in the first generation of the virus.
+
+sys_truncate and sys_ftruncate are used to set (grow or shrink) the size of a
+file.
+
+sys_chmod and sys_fchmod can set the permissions of a file (if possible). 
+sys_utime can set the creation and modification time-stamps of a file. 
+sys_chown and sys_fchown set the owner of a file (by UID - user id) along with 
+he group (by GID - group id).
+
+sys_rename can rename a file. 
+
+sys_getcwd (get current working directory), sys_chdir and sys_fchdir are used
+for directory navigation.
+
+sys_getdents queries a directory, reading in blocks of 'linux_dirent' structures
+for files in the directory. This is some-what like findfirst/findnext. The
+'linux_dirent' structure is given at the end of this section. 
+
+sys_getuid tells us the current user id - always zero for 'root'.
+
+sys_rt_sigaction, sys_rt_sigprocmask, stub_rt_sigreturn are used for 'signal'
+handlers - something like exception handling. See section on signal handlers
+later in this document.
+
+The kernel (not glibc) stat structure is as follows:
+
+struc	stat
+	.st_dev		resq	1       ; ID of device containing file
+	.st_ino		resq	1       ; inode number
+	.st_nlink	resq	1       ; Number of hard links
+	.st_mode	resd	1       ; protection / permissions
+	.st_uid		resd	1       ; User ID of owner
+	.st_gid		resd	1       ; Group ID of owner
+	.__pad0		resd	1
+	.st_rdev	resq	1       ; device ID if special file
+	.st_size	resq	1       ; total size in bytes
+	.st_blksize	resq	1       ; block size for file I/O
+	.st_blocks	resq	1       ; Number of 512-byte blocks
+	.st_atime	resq	1       ; Time of last access
+	.st_atime_nsec	resq	1
+	.st_mtime	resq	1       ; Time of last modification
+	.st_mtime_nsec	resq	1
+	.st_ctime	resq	1       ; Time of creation
+	.st_ctime_nsec	resq	1
+	.__unused	resq	3
+endstruc
+
+struc   linux_dirent
+        .d_ino          resq    1       ; inode number
+        .d_off          resq    1       ; Offset to next linux_dirent 
+        .d_reclen       resw    1       ; Length of this dirent
+endstruc
+
+d_name follows .d_reclen - ASCIIZ string of filename. Its length is
+(d_reclen - 2). Following is a padding byte. Last is BYTE d_type (offset
+(d_reclen - 1). We usually want d_type to be DT_REG.
+
+% Beginning: glibc Calls %
+__________________________
+
+'glibc' is the GNU C Library. It contains C callable equivalent
+functions of most SYSCALL's with better error handling and some extra
+functionality. It additionally provides other functions not directly
+associated with SYSCALL's such as 'printf', 'fopen' and 'malloc'. glibc is 
+Unix, Posix, and partly BSD compliant, making ideal for portable code written 
+in C/C++. Using 'glibc' calls instead of SYSCALL's is another possibility in 
+your virus especially one compiled in a language such as C or C++. Most
+compiled executables use glibc calls. Even if you do not intend to call glibc
+in your virus it is useful to know about, especially for per-process residency
+(see  section '.got.plt hooks' below). Other advantages to using glibc include
+much more documentation (see 'man' pages). Many glibc calls are just 'wrappers'
+to SYSCALL's, usually with the return value modified. Not that structures used
+or returned by glibc calls are often different from their SYSCALL equivalent
+For example, the 'stat' structure returned by the glibc 'stat' call is
+different from the stat structure returned by sys_stat.
+
+Arguments in x64 Linux are passed to a C callable function as follows: RDI, 
+RSI, RDX, RCX, R8, R9 with the return value in RAX.
+
+% A Note: Signals %
+___________________
+
+Signals in Linux are used to catch events such as interrupts, segment faults,
+illegal opcodes, etc. Think of them as similar to SEH in Windows, but
+different. This section was mainly written to share an undocumented piece of
+information you need to know when installing signal handlers with SYSCALL's.
+Signal handlers are installed using sigaction function (sycall 13 - 
+_rt_sigaction):
+
+int sigaction(int signum, struct sigaction *act, struct sigaction *oldact);
+
+See http://linux.die.net/man2/rt_sigaction
+
+Let us note the following details before final note on sigaction call.
+
+Some common signum values are:
+
+%define	SIGILL		04
+%define	SIGSEGV		11
+%define SIGKILL		 9
+
+sigaction struc is as follows:
+
+struc	sigaction
+	.sa_handler	resq	1
+	.sa_flags	resq	1
+	.sa_restorer	resq	1
+	.sa_mask	resq	16
+endstruc
+
+sa_handler function is called with the following arguments:
+
+ rdi = signal number (signum)
+ rsi = siginfo struc
+ rdx = sigcontext
+
+siginfo structure is as follows:
+
+struc	siginfo
+	.si_signo	resd	1	; 0
+	.si_errno	resd	1	; 4
+	.si_code	resd	1	; 8
+	.unused		resd	1	; 12
+	._addr		resq	1	; 16
+endstruc
+
+sigcontext structure is of type 'ucontext' as follows:
+
+struc	sigcontext
+	.r8		resq	1		; +00
+	.r9		resq	1		; +08
+	.r10		resq	1		; +16
+	.r11		resq	1		; +24
+	.r12		resq	1		; +32
+	.r13		resq	1		; +40
+	.r14		resq	1		; +48
+	.r15		resq	1		; +56
+	.rdi		resq	1		; +64
+	.rsi		resq	1		; +72
+	.rbp		resq	1		; +80
+	.rdx		resq	1		; +88
+	.rbx		resq	1		; +96
+	.rax		resq	1		; +104
+	.rcx		resq	1		; +112
+	.rsp		resq	1		; +120
+	.rip		resq	1		; +128
+	.eflags		resq	1		; +136
+	.cs		resw	1		; +144
+	.gs		resw	1		; +146
+	.fs		resw	1		; +148
+	.__pad0		resw	1		; +150
+	.err		resq	1		; +152
+	.trapno		resq	1		; +160
+	.oldmask	resq	1		; +168
+	.cr2		resq	1		; +176
+	.fpstate	resq	1		; +184
+	.reserved	resq	8		; +192
+endstruc
+
+struc	signalstack
+	.ss_sp		resq	1
+	.ss_flags	resq	1
+	.ss_size	resq	1
+endstruc
+
+struc	ucontext
+	.uc_flags	resq	1			; +0x0
+	.uc_link	resq	1			; +0x8
+	.uc_stack	resb	signalstack_size	; +0x10
+	.uc_mcontext	resb	sigcontext_size		; 28h
+	.uc_sigmask	resq	16			; 128h
+							; 228h
+endstruc
+
+Final and most important thing to note: Both include files and man pages state
+'sa_restorer' field of sigaction struc is obsolete and unused. This appears to
+be for the glibc wrapper function only. When using raw SYSCALL we must provide
+'sa_restorer' stub to execute 'sigreturn' SYSCALL or we will get a segment
+violation or some other error:
+
+signal_restorer:
+		push	15	; sigreturn
+		pop	rax
+		syscall
+                
+'RET' instruction is not needed.
+
+% Beginning: Elf64 File Format %
+________________________________
+
+'Elf64' (Executable and Linkable Format 64-bit) is the file format used for x64
+Linux executables, shared/dynamic libraries and relocatables (objects). All the
+structures and constants you need can be found in '/usr/include/elf.h' while:
+
+http://www.openwatcom.org/ftp/devel/docs/elf-64-gen.pdf
+
+There are three main elements to an Elf64 (Elf32) file: the ELF header (Ehdr),
+the Program headers (Phdr) and the Section headers (Shdr). Understanding these
+is enough to getting you infecting Elf64 files with the simpler methods.
+
+The ELF header (Ehdr) is always at the immediate beginning of the file, and is
+the first thing to be checked. It has the following format:
+
+struc	Elf64_Ehdr
+	.e_ident	resb	EI_NIDENT	; 16-BYTE ELF identification
+	.e_type		resw	1               ; Object file type
+	.e_machine	resw	1               ; Machine type
+	.e_version	resd	1               ; Object file version
+	.e_entry	resq	1               ; Entry Point address
+	.e_phoff	resq	1               ; Program Header offset
+	.e_shoff	resq	1               ; Section Header offset
+	.e_flags	resd	1               ; Processor specific flags
+	.e_ehsize	resw	1               ; ELF header size
+	.e_phentsize	resw	1               ; Program header entry size
+	.e_phnum	resw	1               ; No. of Program header entries
+	.e_shentsize	resw	1               ; Section header entry size
+	.e_shnum	resw	1               ; No. of Section header entries
+	.e_shstrndx	resw	1               ; Section name string table index
+endstruc
+
+And the following constants are needed:
+
+%define	EI_MAG0		0       ; File identification [0..3]
+%define	EI_MAG1		1
+%define	EI_MAG2		2
+%define	EI_MAG3 	3
+%define	EI_CLASS	4       ; File class
+%define	EI_DATA		5       ; Data encoding
+%define	EI_VERSION	6       ; File version
+%define	EI_OSABI	7       ; OS/ABI identification
+%define	EI_ABIVERSION	8       ; ABI version
+%define	EI_PAD		9       ; Start of padding bytes
+
+%define EI_NIDENT	16      ; Size of e_ident[] in bytes
+
+%define	ELF64_MAGIC	0x464C457F
+
+EI_MAG0, EI_MAG1, EI_MAG2, EI_MAG3, EI_CLASS, EI_DATA, EI_VERSION, EI_OSABI,
+and EI_ABIVERSION are indexes into the 'e_ident' field array of useful values.
+EI_PAD is the beginning of (currently) unused bytes in e_ident and EI_NIDENT is
+the total size of the e_ident byte array. 
+
+The first check you make to the Ehdr is whether it is an Elf64 file. This means
+that the first four bytes (e_ident[EI_MAG0..EI_MAG3]) must equal 'ELF64_MAGIC'
+("\x7FELF"). We want e_ident[EI_CLASS] to be ELFCLASS64 (64-bit object) and 
+e_ident[EI_DATA] to equal ELFDATA2LSB (little-endian data structures). For
+e_ident[EI_VERSION] we want EV_CURRENT, for e_ident[EI_OSABI] we want 
+ELFOSABI_SYSV and for e_ident[EI_ABIVERSION] we want 0 (zero). The seven bytes
+at e_ident[EI_PAD] should be zero, but perhaps this is a place you can put an
+infection marker. Field eh_machine should be EM_X86_64 and field e_flags can be
+ignored. Fields e_ehsize, e_phentsize and e_shentsize should be checked too. 
+They should be equal to the size of your Elf64_Ehdr struc, Elf64_Phdr struc and 
+Elf64_Shdr structures respectively.
+
+With these values checked, we can use e_type to identify the type of Elf64
+object. Useful values are ET_REL (relocatable - same as an object file), ET_EXEC
+(executable) and ET_DYN (dynamic/shared library - much like a Windows .DLL).
+Now we can access the Program Headers (Elf64_Phdr) using e_phoff and e_phnum
+and Section Headers using e_shoff and e_shnum. We can also use e_shstrndx to
+locate the section containing the names of all other sections in ASCIIZ format.
+Finally e_entry hold the entrypoint for executables and shared libraries. We
+can hook this if we are not using EPO.
+
+In executables and shared objects (dynamic libraries) the Program Headers
+(Phdr's) are used to define segments in which sections are grouped. Relocatable
+objects should *not* have any Phdr's, executables and libraries *must* have
+Phdr's. Program headers (especially PT_LOAD entries) can be thought of as
+similar to PE sections (not to be confused with Elf32/64 sections. They define
+a block of memory in the objects image, its address and size in memory, its
+properties and the image file offset and physical size, plus its alignment in
+memory. The Phdr structure is as follows:
+
+struc	Elf64_Phdr
+	.p_type		resd	1       ; Type of segment
+	.p_flags	resd	1       ; Segment attributes
+	.p_offset	resq	1       ; Offset in file
+	.p_vaddr	resq	1       ; Virtual address in memory
+	.p_paddr	resq	1       ; Reserved
+	.p_filesz	resq	1       ; Size of segment in file
+	.p_memsz	resq	1       ; Size of segment in memory
+	.p_align	resq	1       ; Alignment of segment
+endstruc
+
+Field 'p_paddr' is reserved. Note that 'p_align' must be a power of 2, and
+p_offset and p_vaddr must be congruent modulo p_align. Common p_types are:
+
+        PT_NULL         - An unused entry.
+        
+        PT_LOAD         - Defines a loadable segment. Note that this is
+                        possible the most important type when infecting Elf64
+                        executables and libraries.
+                
+        PT_DYNAMIC      - This is present in dynamically bound object and 
+                        contains information such as relocation information
+                        and libraries required, among other things. This is an
+                        array of Elf64_Dyn entries, the last of which is of
+                        type DT_NULL.
+                        
+        PT_INTERP       - Contains a path to the Program Interpreter. This is
+                        an indicator that the 'dynamic loader' is used when
+                        loading/executing this file.
+                        
+        PT_NOTES        - Contains information particular to the build toolset.
+                        Special information about compile and link information
+                        and so forth.
+                        
+        PT_SHLIB        - Reserved.
+        
+        PT_PHDR         - Defines memory where the Phdr's will be in memory.
+        
+Other p_types are reserved as 'Environment Specific' or 'Processor Specific'.
+When infecting an Elf64 executable or shared object our virus must exist in a
+segment of memory defined by a Phdr entry of PT_LOAD. This may be a PT_LOAD
+entry already in the file, or one we create ourselves. For this segment we must
+set 'p_flags' to the correct combination of values (PF_X, PF_W, PF_R).
+
+The section headers (Shdr's) and sections they define are perhaps the most
+complex and rich parts of an Elf64 file. Files of executable type do not need
+to have Shdr's, they can have Phdr's only. However, such files are very rare
+and not produced by normal compilers and assemblers. Shared libraries must have
+some sections, to define the library name and version, exports and other
+properties. Relocatable Elf64 files consist purely of Shdr's and sections (and
+the Elf64_Ehdr of-course). Elf64 sections can be considered similar to PE file
+data directories. While some sections contain raw data, many contain tables
+of entries specific to that section type. The format of a Elf64_Shdr entry is:
+
+struc	Elf64_Shdr
+	.sh_name	resd	1       ; Section name
+	.sh_type	resd	1       ; Section type
+	.sh_flags	resq	1       ; Section attributes
+	.sh_addr	resq	1       ; Virtual address in memory
+	.sh_offset	resq	1       ; Offset in file
+	.sh_size	resq	1       ; Size (in file) of section
+	.sh_link	resd	1       ; Link to other section
+	.sh_info	resd	1       ; Miscellaneous information
+	.sh_addralign	resq	1       ; Address alignment boundary
+	.sh_entsize	resq	1       ; Size of entries, if section has table
+endstruc
+
+Sections are referenced by their index in the Shdr table. The first Shdr entry
+(index 0) is always unused and has sh_type of SHT_NULL. The Elf64_Ehdr contains
+the field 'e_shstrndx' which gives the section index of the section containing
+the string table of section names. Using 'sh_name' as an index into this string
+table, we can retrieve the name of a section as an ASCIIZ string. Section types
+(sh_type) include, but are not limited to:
+        
+        SHT_NULL                - Entry is unused.
+        SHT_PROGBITS            - Contains data used by the program.
+        SHT_SYMTAB              - Contains a linker symbol table.
+        SHT_STRTAB              - Contains a string table.
+        SHT_RELA                - Contains 'rela' style relocation items.
+        SHT_REL                 - Contains 'rel' style relocation items.
+        SHT_HASH                - Contains a symbol hash table.
+        SHT_DYNAMIC             - Contains dynamic linking tables.
+        SHT_NOTE                - Contains not information (like Phdr PT_NOTE)
+        SHT_NOBITS              - Contains uninitialised space, does not occupy
+                                any space in file.
+        SHT_DYNSYM              - Contains a dynamic loader symbol table.
+        
+Other 'Environment specific' or 'Processor specific' sections may be defined.
+                      
+Fields sh_addr, sh_offset and sh_size provide us with the virtual address,
+physical offset and physical size in the file respectively. 'sh_addr' is
+unused in relocatable files. Section flags (sh_flags) can be:
+
+        SHF_WRITE       - Section contains writeable data.
+        SHF_ALLOC       - Section is allocated in memory image of program.
+        SHF_EXECINSTR   - Section contains executable instructions.
+        
+'sh_addralign' describes the required alignment for this section. This value
+must be a power of 2. 'sh_entsize' contains the size in bytes of each entry in
+that section, for sections with fixed size entries. This value is often zero.
+
+'sh_link' field contains the index of an associated section. What this index
+means depends on the type of section containing the sh_link reference:
+
+        SHT_DYNAMIC     - sh_link contains an index to the string table section
+                        used by entries in this section.
+                        
+        SHT_HASH        - sh_link contains an index to the symbol table for
+                        which the hash table applies.
+                        
+        SHT_REL/        - sh_link contains an index to the section of symbols
+        SHT_RELA        referenced by the relocations.
+        
+        SHT_SYMTAB/     - sh_link contains an index to the string table section
+        SHT_DYNSYM      used by entries in this section.
+        
+'sh_info' field contains additional information about the section. Its meaning
+depends on the section type:
+
+        SHT_REL/        - sh_info contains index to the section for which the
+        SHT_RELA        relocations apply.
+        
+        SHT_SYMTAB/     - sh_info contains the index of the first non-local
+        SHT_DYNSYM      symbol. That is the number of local symbols.
+        
+sh_info should be zero for other types of sections.
+        
+Common sections include (A = SHF_ALLOC, W = SHF_WRITE, X = SHF_EXEXINSTR)
+
+        Section Name    Section Type    Flags   Use
+        -------------------------------------------
+        .bss            SHT_NOBITS      A, W    Uninitialised data
+        .data           SHT_PROGBITS    A, W    Initialised data
+        .interp         SHT_PROGBITS    [A]     Program interpreter path name
+        .rodata         SHT_PROGBITS    A       Read-only data (constants and 
+                                                literals)
+        .text           SHT_PROGBITS    A, X    Executable code
+        .comment        SHT_PROGBITS    none    Version control information
+        .dynamic        SHT_DYNAMIC     A[, W]  Dynamic linking tables
+        .dynstr         SHT_STRTAB      A       String table for .dynamic
+                                                section
+        .dynsym         SHT_DYNSYM      A       Symbol table for dynamic
+                                                linking
+        .got            SHT_PROGBITS    Mach. dep. Global offset table
+        .hash           SHT_HASH        A       Symbol hash table
+        .note           SHT_NOTE        none    Note section
+        .plt            SHT_PROGBITS    mach. dep. Procedure linkage table
+        .rel<name>      SHT_REL         [A]     Relocations for section name
+        .rela<name>     SHT_RELA        [A]     Relocations for section name
+        .shstrtab       SHT_STRTAB      none    Section name string table
+        .strtab         SHT_STRTAB      none    String table
+        .symtab         SHT_SYMTAB      [A]     Linker symbol table
+        
+Sections such as .text, .data and .rodata contain raw, unformatted data.
+Sections such as .interp, .dynamic, .dynstr, .rel(a)* and .symtab contain
+tables of the data structure appropriate to that section. String tables 
+sections of type SHT_STRTAB) contain one ASCIIZ string after another, with
+strings referenced by their index (offset) into that section. The first entry
+(offset zero) of a string table is always a NULL byte, allowing for an empty
+string. In relocatable files, all in the relocatable are needed. In executable
+files some sections are needed by the dynamic loader, while others such as
+.text and .data are redundant. This is because the allocation of memory needed
+for them and the reading of the file, are all provided by the Phdr entries.
+Although they may not be used by the dynamic loader, they might be used by
+other tools that work with Elf64 files.
+
+% Recommendations: Working with Elf64 Files %
+_____________________________________________
+
+Some simple recommendations on working with Elf64 files. Firstly, and most
+basically I prefer to use pread/pwrite calls that take an offset of the read/
+write. This saves an 'lseek' and produces smaller code. Secondly, try to avoid
+unnecessary calls and file I/O. This can be done by only reading in everything
+you need only once and not writing it until the end. You should also check
+everything as you go before reading in anything else. For example, reading in
+the Ehdr and checking everything you can about it before reading in the Phdr's.
+Only if the Phdr's pass the test do you read in the Shdr's, and only if the
+Shdr's pass the test do you read in the section images. Of course, you could
+check certain fields of the files 'stat' structure, such as its length, before
+you even open the file.
+
+I would also recommend only searching for sections by name when you have to.
+When you can use fields sh_link and sh_info, you should. For example you might
+find section '.plt' by name, but then you would find its relocations section
+by searching for a section of type SHT_REL or SHT_RELA with its sh_info field
+pointing to .plt index, rather than looking for '.rel.plt' or '.rela.plt'.
+
+I think making a temporary copy of the victim file and infecting that copy
+is a good idea. This way if infection fails someway into the procedure, you can
+delete the temporary copy, leaving the original file unmodified. If infection
+succeeds you can delete the victim, rename the temporary file to the victim
+filename, and restore permissions, uid/gid, and timestamps.
+
+Being able to read in an entire Elf64, modify it and rebuild it is strongly 
+recommended. As you will see in sections on infection below, infection schemes
+can be as simple as appending the virus to an executable and modifying a Phdr.
+Maybe you do not need to deal with the entire Elf64 in such a case. However,
+for more complex infection schemes, epo, per-process residency etc. this comes
+in useful. You would have a routine that reads in an entire Elf64 file: first
+the Ehdr, then the Phdr's, then the Shdr's and finally the image (content) of
+each section (except of type SHT_NOBITS). This may use a bit more memory during
+infection (especially for large files), but will lead to simpler, smaller,
+faster code. You would then have the appropriate routines to re-write the Ehdr
+(if it has been modified), rewrite the Phdr's, rewrite the Shdr's and rewrite
+any section image. These routines can then be utilised in a single routine to
+rebuild the entire Elf64 file after modification. When allocating memory from
+the Phdr's, Shdr's and section images, allocate some extra memory for each.
+This way you can add extra headers or extra data (such as code/data, relocation
+items, dynamic symbols etc.) to a section if you need to.
+
+When looking for relocations (".rel<section>" or ".rela<section>", dynamic
+symbols and their names (".dynsym" and ".dynstr") we are better off using Elf64
+'rules' than their names.
+
+Relocations: Relocations for a section can be found by looking for a section of
+type 'SHT_REL' or 'SHT_RELA' with an 'sh_index' field containing the index of
+the section for which we want relocations.
+
+Symbol Table: Once we have the relocations for a section, the 'sh_link' field 
+of the relocation sections Shdr will tell us the section index of the Symbol
+table used for that section.
+
+Symbol Names: For sections containing symbols (type SHT_SYMTAB or SHT_DYNSYM)
+the 'sh_link' field will provide us with the section index of the string table
+for those symbols.
+
+A note on relocation information (rel/rela .r_info field): This is a 64-bit
+value holding 2 32-bit fields. The high 32-bits hold the appropriate symbol
+index, the low 32-bits hold the relocation type. These macros should
+demonstrate this:
+
+#define ELF64_R_SYM(i)((i) >> 32)
+#define ELF64_R_TYPE(i)((i) & 0xffffffff)
+#define ELF64_R_INFO(s, t)(((s) << 32) + ((t) & 0xffffffff))
+
+% Made Simple: Elf64 Executable infection %
+___________________________________________
+
+Perhaps there are 2 basic steps for parasitic infection of an executable:
+
+1) Incorporate the virus into the file and memory image of the executable.
+2) Find a way for the virus to receive control.
+
+Let us consider the most basic facts for these 2 steps when infecting a Elf64
+executable. First creation of the executable image from file to memory is done
+using the Phdr's in executables. Sections such as '.text' are ignored. So we
+must incorporate the virus into a Phdr (almost always of type PT_LOAD). This
+Phdr must also have the correct flags (memory permissions) for our virus:
+at least PF_X+PF_R, but possibly PF_W as well. Secondly the virus must gain
+control. The easiest way to do this in an Elf64 executable (as with most
+executables) is to hook the entrypoint. This is defined in the 'e_entry' field
+of the Ehdr. Of course you can play with sections such as .text and .plt to try
+different EPO (EntryPoint Obscuring) techniques.
+
+Let us consider ways to incorporate the virus into the host's physical/virtual
+image. We could overwrite an unneeded section, perhaps of SHT_NOTE if it is
+inside a segment define by a Phdr and modify the Phdr to be executable. Or we
+could write the virus into alignment space between Phdr segments and modify the
+Phdr too. Both these techniques limit the size of the virus and the number of
+victims we could infect. Many Elf32 virus move the Ehdr and Phdr's back one
+page (4096 bytes) decreasing the memory address and growing the size of the
+first Phdr, writing the virus in the newly created space between the end of
+the Phdr table on the newly create page and the first section. Of course you
+must fix up all Phdr/Shdr offsets by 1 page that are after the new page. I have
+not tried this method on x64 Linux (only x86) but am not comfortable moving the
+headers back more than 1 page. This limits the virus size too.
+
+My favourite solution is to append the virus, and create its own Phdr containing
+it. The Phdr can be created in two ways: if there is space between the last
+Phdr and the first section, we can add a new Phdr (and increment e_phnum in the
+Ehdr). We can also find an unneeded Phdr (such as PT_NOTE or PT_PHDR). The new
+Phdr should be of type PT_LOAD and p_flags should be PF_R+PF_X(+PF_W). p_offset
+and p_filesz should define the physical virus image in the file. p_memsz should
+be the size of the virus in memory. We must calculate p_vaddr and p_align by
+examining all other Phdr's: p_align for PT_LOAD segments may be 4k or 2mb, or
+possibly even something else, thus we must walk the Phdr's and fine the maximum
+alignment value used for PT_LOAD segments. For p_vaddr we must first find the
+maximum memory address used by other Phdr's in the executable. This is the 
+maximum value of 'p_vaddr + p_memsz'. We must then align this value to a
+multiple of our new p_align and add the physical offset of the virus mod
+p_align. This is because the the virtual address of our PT_LOAD segment must
+be congruent to the file offset of the virus mod the alignment value: The
+following code will demonstrate finding a PT_NOTE or PT_PHDR entry, finding the
+correct (maximum) pt_align value, and the highest virtual address used in the
+executable before our virus. (PT_PHDR patching is experimental).
+
+		movzx	rcx,word [Elf64_Ehdr+Elf64_Ehdr.e_phnum]
+		lea	rdx,[phdrs_buf]
+		xor	rbp,rbp				; max virtual addr
+                push    rbp                             ; pointer in buffer of
+                pop     rbx                             ; target Phdr
+                push    rbp
+                pop     rdi                             ; max align value
+	.phdr_loop:	cmp	dword [rdx+Elf64_Phdr.p_type],PT_NOTE
+                        je      .phdr_found
+                        cmp	dword [rdx+Elf64_Phdr.p_type],PT_PHDR
+			jne	.phdr_not_found
+                .phdr_found:    test    rbx,rbx
+                                cmovz   rbx,rdx ; assign new target phdr
+		.phdr_not_found:
+			mov	rax,[rdx+Elf64_Phdr.p_vaddr]
+			add	rax,[rdx+Elf64_Phdr.p_memsz]
+			cmp	rbp,rax			
+                        cmovb   rbp,rax         ; assign new max vaddr
+                        cmp	dword [rdx+Elf64_Phdr.p_type],PT_LOAD
+			jne	.phdr_not_load
+				mov	rax,[rdx+Elf64_Phdr.p_align]
+				cmp	rdi,rax
+				cmovb   rdi,rax ; assign new alignment value
+		.phdr_not_load:
+			add	rdx,Elf64_Phdr_size
+			loop	.phdr_loop
+		mov	[max_phdr_vaddr],rbp
+                mov	[target_phdr],rbx
+                mov     [phdr_align],rdi
+		cmp	rbx,rcx ; [target_phdr]
+                je	error
+		cmp	rbp,rcx ; [max_phdr_vaddr]
+                je	error
+                cmp     rdi,rcx ; [phdr_align]
+        
+Calculating the address in memory (p_vaddr) of our new segment based on the
+above loop would look something like this:
+
+        mov     rax,[phdr_align]
+        mov     rbx,[virus_physical_offset]
+        mov     rcx,[max_phdr_vaddr]
+        dec     rax
+        and     rbx,eax                 ; rbx = offset of virus mod alignment
+        add     rcx,rax
+        not     rax
+        and     rcx,rax                 ; rcx = aligned vaddr of our Phdr entry
+        add     rcx,rbx                 ; rcx = new vaddr of our Phdr segment
+        
+The target Phdr (PT_NOTE or PT_PHDR) should be changed to look something like
+this:
+
+        .p_type         = PT_LOAD
+        .p_flags        = PF_X+PF_R(+PF_W)
+        .p_offset       = physical offset of virus in file
+        .p_vaddr        = virtual address of virus as caluclated above
+        .p_paddr        = unused
+        .p_filesz       = size of the virus image in the file
+        .p_memsz        = size of virus in memory
+        .p_align        = alignment value as calculated above.
+        
+This concludes our look at infecting Elf64 executables.
+
+% Made Simple: Elf64 Relocatable infection %
+____________________________________________
+
+Elf64 Relocatable files are what some would call 'object' files: fragments of
+code output by the compiler and then linked together to create the final
+executable. Relocatable infection has some nice properties: When an infected
+relocatable is linked into an executable it appears somewhere in the middle of
+the file, giving a 'code integration' like effect. Execution is handed over to
+the virus somewhere in the middle of the code flow, giving an EPO effect. When
+infecting a relocatable file we should make our code fully relocatable. This is
+because we do not know where the virus will end up in the final linked
+executable and we do not know if the infected relocatable will be linked into
+an executable or shared library. When infecting a relocatable we should heed
+the recommendations in the section 'Recommendations: Working with Elf64 Files'
+above. Routines to read in the entire file part-by-part, modify them, re-write
+them and completely rebuild the Elf64 file make our job easier. We should make
+sure that Ehdr field e_type is ET_REL and that there are *no* Phdr's. When
+adding data to a section, we should update its size in its Shdr entry for 
+rebuilding the Shdr later on. Relocatable files often have Shdr entries *not*
+in order of the section offsets in the file. Before rebuilding we should
+create an array of section indexes and sort it by the offset of the section in
+the file (sh_offset). We should not modify the order of entries in the Shdr's
+however. To rebuild the Elf64 file we first write the Ehdr. We next write the
+section images: We write them in order of file offset. The first has offset
+after the Ehdr. Each section after that has offset of:
+
+(prev_Shdr.sh_offset + prev_Shdr.sh_size aligned to current_Shdr.sh_addralign)
+
+That is the end of the last section image aligned to the section alignment
+field. Sections with sh_offset equal to zero or sh_type of SHT_NOBITS should
+have writing of the section image skipped. We must update the sh_offset field
+of each Shdr as we write the section to the file. Last we write the updated
+Shdr's at the end of the file and update Ehdr e_shoff field.
+
+With this Elf64 infrastructure in place, Elf64 relocatable infection is not a
+difficult thing. Let us first consider the 2 basic steps for parasitic
+infection, stated in the previous section:
+
+1) Incorporate the virus into the file and memory image of the executable.
+2) Find a way for the virus to receive control.
+
+Incorporating the virus into the relocatable file is the easiest step. We can
+do as little as appending the virus to the .text section. Of course, we can
+consider more elaborate infection schemes such as placing a (polymorphic)
+decryptor in .text and the encrypted virus in .data or .rodata. When doing such
+things we must create relocation items in .text for any pointer to data in a
+different section. Such relocation item is usually of type R_X86_64_64 so field
+'r_info' of new relocation item should be (symbol << 32) | R_X86_64_64. Symbol
+would usually be symbol 'SECTION' and section index and offset in section of 
+relocation target.
+
+Finding a way for the virus to receive control is the greater challenge, but
+still is not difficult. First option is a classic EPO technique. We can scan
+.text for sequence of instruction(s) save these bytes and patch it with CALL to
+virus. Note that you want to use a relative CALL and not a JMP because we do
+not know where the virus will be in the executable and this allows for the RIP
+to be on the stack. We then restore patched bytes or emulate them and return.
+Second method is more advanced. We 'hijack' a symbol pointing to code in 
+.text, saves its target and set the new target to out virus. This way when code
+from another object/module links to that target (by name) the CALL is to the
+virus and not the original function. The virus runs and then passes control
+to the original function. With gcc compiled relocatables, symbols pointing to
+functions are always of the 'FUNC', so we choose a 'FUNC' call and hijack it.
+Some compilers/assemblers do not use symbol type 'FUNC'. NASM for example only
+uses symbols of type 'NOTYPE' to point to code. The solution is to find a 
+symbol of type 'NOTYPE' pointing to code in .text section. We check that symbol
+target is in .text and seems to point to code. Such check could be for
+'PUSH RBP / MOV RBP,RSP' or 3 PUSH's in a row, etc.
+
+This concludes our look at infecting Elf64 relocatables.
+
+% prelink (-u): The challenge %
+_______________________________
+
+First of all, I would like to thank Herm1t for putting me onto this. From the
+'prelink' manual: 'Prelink is a tool designed to speed up dynamic linking of
+ELF programs on various Linux architectures' developed by Jakub Jelinek.
+To speed up dynamic linking, prelink makes changes to the ELF files such as
+caching of symbol lookups, optimisation of relocations to be adjacent to
+corresponding symbols and reducing the number of non-sharable pages created by
+relocations. A detailed description of 'prelink' is outside the scope of this
+article, but the source code and manual can be found here:
+
+http://people.redhat.com/jakub/prelink/
+
+It is possible to say that the majority of Elf64 infection methods will work
+with a prelinked file and leave it there, but there is a challenge. First we
+must realise when prelink'ing a file, prelink stores 'undo' information
+allowing for the modifications to be undone, 'prelink -u file'. Attempting a
+'prelink -u' on a file that has since been infected will almost always result
+in an error message or a corrupted file. The challenge is to find a way to
+infect prelink'd files so that a 'prelink -u' will not display any error
+messages, will undo the changes made by prelink, and at the same time leave the
+file infected and uncorrupted. I can tell you this can be done. There is a
+lesser challenge aswell. When processing libraries, prelink adds a 
+'DT_CHECKSUM' dynamic tag for which the integrity check of the library will
+fail if the library has been modified. Can we beat this? As a final note,
+prelink'd executables have some particular properties and requirements that
+other executables often will not have. It is my recommendation to have one
+infection routine for normal executables and a special one for executables that
+have been processed by prelink.
+
+% prelink (-u): What You Need To Know %
+_______________________________________
+
+When infecting prelink'd executables there are some things we should know.
+First of all, the 'undo' information is held in a section called
+'.gnu.prelink_undo'. The presence of this section can be used as an indicator
+that the file is a prelink'd executable. The format and processing of this
+section will be discussed later in this section. Some preliminaries on
+sections: prelink expects '.gnu.prelink_undo' to be the second to last section
+of the file and '.shstrtab' (see Ehdr e_shstrndx) to be the last. prelink also
+expects the sections of the file as declared in the Shdr's to be in physical
+(file offset) order. Lastly, although Phdr's, not Shdr's, are used by the
+operating system to load the file image, prelink works exclusively with
+sections. This means that the virus should belong to a section or it could
+disappear. For example, if you append the virus and modify a Phdr, after a
+'prelink -u' (if all the other checks below pass) the file will be truncated
+after the last section or Shdr's, the virus will be gone, and the file will be
+corrupt. So you must include the virus in a section - of course you must include
+the virus in a Phdr PT_LOAD segment as well.
+
+Now we will discuss the .gnu.prelink_undo section. This must be the second to
+last section with .shstrtab following it, so any section you add for the virus
+must be inserted before it (both in Shdr table and in physical file image). The
+layout of .gnu.prelink_undo is quite simple: the original Ehdr, followed by the
+original Phdr's, followed by the original Shdr's. There is no padding or
+alignment between any of these. The first Shdr (SHT_NULL) is not included, so
+all section indexes are biased by -1. The first check prelink does on this
+section is its size. It must be: 
+
+sizeof(Ehdr) + e_phnum * sizeof(Phdr) + (e_shnum - 1) * sizeof(Shdr).
+
+The next check is on the Ehdr. The Ehdr of the file must be consistent with the
+Ehdr in .gnu.prelink_undo. All fields must be updated except for e_phnum,
+e_shnum and e_shstrndx. These 3 values must be retained unless of course if you
+need to update e_phnum or e_shnum for additional Phdr or Shdr entries. Next we
+update the Phdr table in .gnu.prelink_undo to reflect changes made to the host
+Phdr's. The thing to note here is that prelink may add a Phdr entry. This means
+that we cannot just copy the Phdr's from the host to .gnu.prelink_undo over,
+and additionally that the index of a Phdr may be different in .gnu.prelink_undo
+compared to the host. So we must search the Phdr table in the undo section for
+our target Phdr entry by properties such as 'p_type' and 'p_offset' we then
+update this entry accordingly. If you have added an additional Phdr in the host
+you must also insert it before the Shdr table in undo section. Things are much
+the same for Shdr's, except you may end up appending an Shdr entry at the end
+of the section. If anything is inserted/appended to .gnu.prelink_undo, the
+sh_size field of the undo section.
+
+One more thing to consider is dynamic tags DT_GNU_PRELINKED (.d_tag=0x6FFFFDF5)
+and DT_CHECKSUM (.d_tag=0x6FFFFDF8). These tags are only used in libraries, not
+executables. The first is a timestamp of when the library was prelink'd. The
+second is an integrity check value - a combined CRC32 of all the sections. To 
+handle these fields after infection, we must have pointers to the .d_val field
+of both dynamic entries. We save the value of DT_GNU_PRELINKED and then zero
+both of them. Checksum value is combined CRC32 of all sections after section
+zero (SHT_NULL) that have SHF_ALLOC, SHF_WRITE or SHF_EXECINSTR set, have non-
+zero size and are not of type SHT_NOBITS. The following pseudo-code may help:
+
+        /* 
+         'checksum' is a pointer d_val field for DT_CHECKSUM.
+         'prelinked' is a pointer d_val field for DT_GNU_PRELINKED
+         'old_time' is an integer to store old timestamp.
+        */
+        /* fix prelink checksum */
+        if (checksum != NULL) {
+                *checksum = 0
+                if (prelinked != NULL) {
+                        old_time = *prelinked;
+                        *prelinked = 0;
+                }
+                uint32_t crc = 0;
+                for (i = 1; i < shnum; i++)
+                        if ( (shdr[i].sh_flags & (SHF_ALLOC | SHF_WRITE | SHF_EXECINSTR)) && shdr[i].sh_size && (shdr[i].sh_type != SHT_NOBITS))
+                                crc = crc32(crc, file + shdr[i].sh_offset, shdr[i].sh_size);
+                *checksum = crc;
+        }
+        /* restore prelinked time */
+        if (prelinked != NULL) *prelinked = old_time;
+
+CRC32 algorithm uses standard reverse polynomial of 0xEDB88320. Such CRC32
+routines are dime-a-dozen in viruses, especially for Win32 imports. However,
+just like the 'prelink' source code, you might consider using a lookup table to
+speed things up, since section images could be quite large. Such code could
+look something like this:
+
+; Create CRC32 lookup table.
+gen_CRC32_table:lea     rdi,[CRC32_Table]       ; 1024 byte buffer (256 DWORDs)
+		xor	ebx,ebx
+	.dword_loop:	push	rbx
+			pop	rax
+			push	8
+			pop	rcx
+		.bit_loop:	shr	eax,1
+				jnc	.no_xor
+				xor	eax,CRC32_POLY
+			.no_xor:loop	.bit_loop
+			stosd
+			inc	bl
+			jnz	.dword_loop
+	.exit:	ret
+                
+; Calculate CRC32 of buffer taking last CRC32 as argument
+; RDX = input crc32
+; RSI = input buffer
+; RCX = length in bytes
+; Output: crc32 in RDX.
+;
+CRC32:		lea     rbx,[CRC32_Table]		
+		not	edx                     ; invert input crc
+                xor	rax,rax			
+	.bloop		lodsb
+			xor	al,dl
+			shr	edx,8
+			xor	edx,[rbx+(rax*4)]
+			loop	.bloop
+		not	edx                     ; invert output crc		
+		ret
+                
+Such routines should provide a considerable speedup over 1-bit at a time CRC32
+routines.
+
+This ends our discussion of prelink'd executables (and shared libraries).
+
+% Made Simple: .got.plt hooks for per-process residency %
+_________________________________________________________
+
+Per-process residency is made simple by hooking function pointers in section
+'.got.plt' (global offset table - procedure linkage table). Section '.plt'
+(procedure linkage table) imports exported addresses from libraries, much like
+the PE IAT (import address table). .plt section contains series of 'JMP'
+instructions to imported functions - this JMP is to qword pointer held in 
+.got.plt. .got.plt section contains an array of 64-bit pointers to imported
+functions. When hooking functions (usually in glibc) parameters are passed in
+registers using C calling convention (see section on 'glibc' above). This can
+be useful in some circumstances such as using hooks to infect files accessed:
+Most calls that take filenames, take the path string in the first argument
+(RDI), for example open/fopen/execve/chmod.
+
+Hooking of imported procedures takes 3 steps:
+
+1) Locating memory address of function pointer .got.plt at infection time.
+2) Hooking the function at runtime.
+3) Executing the hook and re-hooking when hook is called.
+
+To locate memory address of pointer function(s) we want to hook at infection
+time in memory, we must use relocation section, dynamic symbol section and
+dynamic symbol string table section associated with '.plt'. We then loop the
+dynamic symbol table looking for symbol with the name we want (using .st_name
+field of Elf64_Sym structure). When the correct symbol is found we must save
+the index of it: first symbol in dynamic symbol section has index of zero. Once
+we have the symbol index of the function(s) we must walk the relocation section
+of .plt to find the address in memory of the qword pointing to our function in
+.got.plt. We are looking for a relocation with .r_info field having type of
+'R_X86_64_JUMP_SLOT' and symbol index of the symbol for our targeted function
+that we just found. If such relocation item is found, r_offset field contains
+the address in .got.plt of the qword pointing to our function. We must save
+this address for runtime hooking, saving some sentinel value such as NULL, if
+qword to hook is not found.
+
+Hooking of the function at runtime is quite simple, with one caveat: we must
+re-hook every time the function is called. This is because dynamic loader
+function '_resolve' resolves the true address of the function and then writes
+it back on each call preventing future calls to our hook. So we must re-hook on 
+each call. With this in mind, if we have the address of qword to hook in
+.got.plt (check we do not have sentinel value) we save the address in this
+qword (original function address) and replace it with our hook for the
+function, which will be called the first time the target function is called.
+
+When executing the hook and re-hooking the function on each call, the procedure
+hook as a structure something like this.
+
+        + Save flags,regs
+        + Do what we must do before original function is called
+        + Restore flags,regs
+        + Call original function
+        + Save flags,regs
+        + Re-hook function
+        + Do what we must do after function has been called
+        + Restore flags,regs
+        + Return to caller.
+        
+This concludes our section on per-process residency using .got.plt hooks.
+
+% Conclusions %
+________________
+
+Hopefully this guide was useful enough to get you writing Linux x64 viruses,
+it is not hard. You can get more information from the 'Links' section
+following. So we can come to 2 conclusions:
+
+1) Writing a basic Linux x64 infector is not a difficult thing. All you need to
+   know is out there.
+
+2) When you get to hell - tell the devil 'JPanic' sent you.
+
+% Links %
+_________
+
++ http://www.linuxmanpages.com/
+Linux 'man' pages.
+
++ http://linux.die.net/man/
+Linux 'man' pages.
+
++ http://ubuntu.wikimedia.org/git/ubuntu-jaunty/arch/sh/include/asm/unistd_64.h
+unistd_64.h - syscall numbers.
+
++ http://www.openwatcom.org/ftp/devel/docs/elf-64-gen.pdf
+Elf64 File Format.
+
++ http://dyxa.com/code.php?file=linux/elf.h
+Elf64 'include' file - structures and constants.
+
++ http://llvm.org/docs/doxygen/html/Support_2ELF_8h_source.html
+LLVM Elf include file - structures and constants.
+
++ http://www.vxheavens.com/herm1t/
+Herm1t's page - A lot of info on Linux viruses.
+
++ http://www.mcafee.com/us/resources/white-papers/wp-linux-viruses-elf-file-format.pdf
+White Paper on ELF infection by Marius Van Oers for Virus Bulletin Con. 2000
