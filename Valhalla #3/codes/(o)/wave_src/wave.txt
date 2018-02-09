@@ -1,0 +1,118 @@
+
+                             Noisy Waves:
+                              TRNG virus
+                                by (o)
+
+Intro
+
+It is uncommon to find viruses which use hardware enhancements. I heard of a
+virus which uses GPU to decipher its code.  At the time I already knew about
+hh86's work on Intel AES-NI instruction set to assist AES encryption.  It is
+common, however, to associate viruses and microphone devices in espionage. I
+present here another technique.
+
+
+Reading you Five
+
+PRN (PseudoRandom Number Generators) use mathematical algorithms to generate
+what would seem to be random numbers from a seed.   But due to the fact that
+PRNG are deterministic at heart, every random number can be guessed from the
+base seed.  Unlike PRNG, TRNG "True Random Number Generators" do not rely on
+such mathematical algorithms, so they cannot be safely predicted.
+
+To generate TRNG there is hardware, but it can be too expensive, and hard to
+get.  Finally, I found aresearch in random.org.   The author uses background
+ambient/atmospheric noise.  A good source for randomness.   And of course, a
+cheaper alternative.
+
+Windows has a set of API easy to use to play or record audio. MCI API is bit
+boring so I decided to use WaveForm API instead.  We record as if we were to
+create WAV format audio file.
+
+We will use just a few APIs, here is a sample code:
+
+wave_formatex   label    near
+        dw      WAVE_FORMAT_PCM                                     ;WAVEFORMATEX.wFormatTag (uncompressed data LPCM (linear pulse code modulation))
+        dw      nChannels                                           ;WAVEFORMATEX.nChannels
+        dd      nSamplesPerSec                                      ;WAVEFORMATEX.nSamplesPerSec
+        dd      nSamplesPerSec * ((nChannels * wBitsPerSample) / 8) ;WAVEFORMATEX.nAvgBytesPerSec
+        dw      (nChannels * wBitsPerSample) / 8                    ;WAVEFORMATEX.nBlockAlign
+        dw      wBitsPerSample                                      ;WAVEFORMATEX.wBitsPerSample
+        dw      0                                                   ;WAVEFORMATEX.cbSize = sizeof WAVEFORMATEX
+
+wave_setup      label    near
+        mov     edi, esp                     ;in stack - API addresses
+        mov     ebx, ecx
+        mov     ebp, (nSamplesPerSec * RecordingTimeSecs) * ((nChannels * wBitsPerSample) / 8) + sizeof WAVEHDR
+        push    ebp
+        push    40h
+        call    dword ptr [edi + sizeof WINMM + KERNEL32.kGlobalAlloc]
+        lea     ecx, dword ptr [eax + sizeof WAVEHDR]
+        mov     dword ptr [eax + WAVEHDR.lpData], ecx
+        mov     dword ptr [eax + WAVEHDR.dwBufferLength], ebp
+        lea     edx, dword ptr [esi - (offset wave_setup - offset wave_formatex)]
+        push    edi
+        push    eax
+        push    esi
+        push    ebx
+        mov     esi, esp
+        xchg    ebp, eax
+        push    sizeof WAVEHDR
+        push    ebp
+        push    sizeof WAVEHDR
+        push    ebp
+        push    WAVE_FORMAT_DIRECT
+        push    ebx
+        push    ebx
+        push    edx
+        push    WAVE_MAPPER
+        push    esi
+        call    dword ptr [edi + WINMM.waveInOpen]
+        lods    dword ptr [esi]
+        xchg    esi, eax
+        push    esi
+        call    dword ptr [edi + WINMM.waveInPreparedHeader]
+        push    esi
+        call    dword ptr [edi + WINMM.waveInAddBuffer]
+        push    esi
+        call    dword ptr [edi + WINMM.waveInStart]
+
+waverec_loop    label     near
+        push    sizeof WAVEHDR
+        push    ebp
+        push    esi
+        call    dword ptr [edi + WINMM.waveInUnpreparedHeader]
+        cmp     al, WAVERR_STILLPLAYING
+        je      waverec_loop
+        call    dword ptr [edi + WINMM.waveInClose]
+
+First is to setup WAVEFORMATEX.     Set FormatTag to be an uncompressed data
+LPCM input.    Set channels to 2, so that it is stereo (or try 1 channel for
+mono).  Samples per seconds, is set to 44.1Khz.  Average bytes per second is
+calculated using number of samples per second multiplied by block alignment.
+Block  alignment  is  calculated multiplying number of channels by number of
+bits for each sample per second, and dividing the result by 8.
+
+Second is to setup WAVEHDR.  Most fields are useless, and we ignore them all
+with  exception of lpData which is pointer to a buffer to receive recording,
+and then buffer length.
+
+Call  waveInOpen  to open the device for input, and let the function  decide
+which device open because we haven't included any code to find one.   If API
+returns MMSYSERR_NOERROR (0), it's okay, then  you  might want to check that
+it returned a handler. WAVEFORMATEX structure is of no use now.
+
+Call waveInPrepareHeader to prepare buffer for input data.  waveInAddBuffer,
+will send prepared buffer to input device. waveInStart will start input from
+device.
+
+Finally try to clean up using waveInUnprepareHeader, if  buffer  is still in
+queue, keep trying. Once it succeeds, close device.
+
+
+Roger That!
+
+I strongly recommend you to not use this data to seed your PRNG. ;)
+My code uses recordings (if successful) as encryption key on simple XTEA.
+
+(o) - gzgztt3/at/gmail.com
