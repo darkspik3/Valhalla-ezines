@@ -1,0 +1,150 @@
+##########################################################
+#### Infecting JAR-Files using the JavaCompiler Class ####
+####################################### by R3s1stanc3 ####
+##########################################################
+
+#########
+# index #
+#########
+1. Intro
+2. How JAR files work
+3. The JavaCompiler class
+4. How the infection works
+5. Conclusion
+6. References
+
+
+
+
+1. Intro
+
+The last codes I wrote were mostly in Java and I have a few reasons for 
+this: If you don't use very specific functions for Windows (e.g. trying 
+to  print  a  file)  a  code  can  be  executed on every PC having Java 
+installed  no  matter  if  it's  Windows, Linux, Mac; 32-bits, 64-bits.
+The other reason is that I only know two other viruses (not speaking of 
+exploits or drive-bys) written in Java out there: 
+
+StrangeBrew (1998; CodeBreakers #4) [1] and 
+Beanhive (1999; CodeBreakers #5) [2]
+
+both written by Landing Camel. These codes infected java classfiles by 
+inserting their own bytecode in another classfile.
+
+So  I  was  playing  around  with the JavaCompiler class [3], trying to 
+write  a  polymorphic  code and I wasn't able to get it running because 
+you  need  to write the source code in a string and reassemble it every 
+time  containing  its own code again and every time I got another error 
+while  compiling. Maybe I will get it running someday. But that gave me 
+the idea of a new way to infect JAR files.
+
+
+2. How JAR files work
+
+A  JAR  file  (Java  ARchive)  is  a  simple zip file that includes the 
+compiled  class  files  and  a  folder  called "META-INF" including the 
+MANIFEST.MF that tells which class file is executed first.
+
+
+3. The JavaCompiler class
+
+The  JavaCompiler  class  is  a  Java  class,  that  can  compile  Java 
+sourcecode  from a textfile or a string in runtime. It is even possible 
+to run the compiled code in the memory without saving the compiled file 
+on the disk.
+
+
+4. How the infection works
+
+To  find  victim  files,  the  code  simply lists all files ending with 
+".jar"  in  the  current directory in a string array and runs a foreach 
+loop. 
+When  the  virus  is  executed,  it  extacts  itself  in  one temporary 
+directory  and  the victim file in another directory. Then it reads the 
+victim's main class from the manifesto.
+
+Example of an uninfected MANIFESTO.MF:
+  Manifest-Version: 1.0
+  Class-Path: 
+  Main-Class: someClassName
+  
+"someClassName"  is  read  from  the  manifesto  of the file we want to 
+infect.  That  mainclass will be replaced by a new class "Infect.class" 
+later, that is compiled by the virus.
+
+The code we compile in runtime:
+
+  public class Infect {
+  public static void main ( String args [ ] ) 
+  {
+  	javax . swing . JOptionPane . showMessageDialog ( null, \"Hi this is Java Infect0r\nand welcome to Valhalla #3!\" ) ;
+	someClassName a = new someClassName ( );
+	a . main ( args ) 
+	CompileSourceInMemory b = new CompileSourceInMemory ( ) ;
+	try 
+	{
+		b . main ( args ) ; 
+	}
+	catch ( Exception e ) { }
+  }
+  }
+
+  // create a temporary class with the name of the main class to prevent errors while compiling
+  class someClassName {
+  public static void main ( String [ ] args )
+  { 
+	System . out . println ( ) ; 
+  }
+  }
+
+This  class  executes  the  original mainclass ("someClassName"). After 
+executing the original file, it executes the virus code to infect other 
+files  ("CompileSourceInMemory").  The  second  class  is  only used to 
+prevent  errors while compiling (the java compiler throws an error if a 
+class is used but the file doesn't exist in the current directory).
+
+When the new file is compiled, the virus copies its own class files and 
+the new compiled file in the temp folder of the host file, modifies the 
+MANIFESTO.MF  so  that  the Infect.class is executed first and zips the 
+JAR file again.
+
+MANIFESTO.MF after being infected:
+  Manifest-Version: 1.0
+  Class-Path: 
+  Main-Class: Infect
+  
+To  prevent a file from beeing infected twice, I add a text file with a 
+specific  name to the JAR archive and if this file exists, a file won't 
+be infected.
+
+We  need the JavaCompiler to compile the new class file (Infect.class), 
+because  every  JAR file has another mainclass so we need to change the 
+class ("someClassName" in this case) we want to execute every time. 
+
+
+5. Conclusion
+
+The  JavaCompiler  class  is great to write viruses. I will  try to get 
+some  polymorphic  code running for the next ezine. A similar technique 
+was  used  by  AlcoPaul  in  polysharp/jabir [4] or Vitamin C [5] (both 
+released  in  DarkCodez #3).  He used the posibility to compile code on 
+the  fly  in  C# and used a changing encryption and varchanging for the 
+polymorphism.  In  his project the sourcecode is stored in a string and 
+gets rebuilt every time.
+
+So  far from now and I hope I gave you some ideas and maybe we will see 
+some more Java viruses soon.
+
+
+
+6. References
+
+[1]		StrangeBrew		http://virus.wikidot.com/strangebrew
+[2]		Beanhive		http://virus.wikidot.com/beanhive
+[3]		JavaCompiler	http://docs.oracle.com/javase/6/docs/api/javax/tools/JavaCompiler.html
+[4]		polysharp		http://ezine.vxnetw0rk.ws/mag3/User/AlcoPaul/polycsharp.html
+[5]		Vitamin C		http://ezine.vxnetw0rk.ws/mag3/User/AlcoPaul/vitaminc.html
+
+
+R3s1stanc3 [vxnetw0rk]				December, 2012
+r3s1stanc3@tormail.org - r3s1stanc3.virii.lu
