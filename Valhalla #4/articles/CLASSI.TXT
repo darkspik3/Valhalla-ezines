@@ -1,0 +1,134 @@
+                            Java Class infection
+                               from PE32 files
+                                   by hh86
+
+
+
+This is my second virus to target the Java platform (Java.Sojourner was the
+first one), and  this  is  my  first  file infector for Java classes. It is
+a direct action infector of Class files in current directory.  A new method
+containing  the  dropper  code is inserted in the Class.  It uses a new EPO
+technique. It is the world's first W32 virus to infect Class files.
+
+
+What is it?
+
+We all know Java Class files.   They are binary files that contain the code
+that is executed by the Java Virtual Machine.   Recently, I  wrote new code
+that inserted a virus in the form of a Class in PE32 files.   The virus was
+able to run inside PE32 files using the Java Native Interface.   This was a
+very  simple  technique.
+
+In my article "Infecting PE files with Java Bytecode", I wrote  that future
+viruses  might  be  polymorphic using different techniques at source level,
+but also, at low-level.  That is, generating  the  actual Java Bytecode and
+rebuilding  or  creating a Class file.  I also said that we need to explore
+further.  So, I decided to write a W32 virus since there no Class infectors
+of this kind.  And also use some new techniques. ;)
+
+
+How can we do that
+
+Java  Class  file  format  is a bit more complicated.   But it is very well
+documented by many sources.  Firstly, we must parse a variable length table
+known as constant_pool[], it contains many more structures in it.   This is
+a very important table which contains symbolic information such as strings,
+descriptors of various types, numbers for variables and constants, etc.  We
+need to know its size and where it ends.
+
+Then we must parse the interfaces[], it is a table which contains  an array
+of indices, each index points to some structure in the constant_pool[].  It
+may or may not be present in the Class file.  We  don't need to extract any
+meaningful information from it.  Since every index is 2 bytes long, we  can
+use interfaces_count field in order to skip it entirely.
+
+Then  we  must parse the fields[], it is a table which contains  structures
+(field_info structures) which  might  contain  a  number  of attribute_info
+structures.  It may or may not be present in the Class file.  We don't need
+to extract any meaningful information from it.
+
+Here is a simple example code of how to parse it:
+
+
+        lods    word ptr [esi]                     ;get fields_count
+        xchg    al, ah                             ;convert it to little-endian
+        xchg    ecx, eax
+        jecxz   parse_methods                      ;if no entries then skip it
+
+parse_ginfo     label    near
+        push    ecx
+        movzx   ecx, word ptr [esi + field_info.attributes_count]
+        lods    dword ptr [esi]                    ;skip access_flags and name_index
+        lods    dword ptr [esi]                    ;skip descriptor_index and attributes_count
+        jecxz   parse_next1                        ;if no attribute_info entries then move to next field_info
+        xchg    cl, ch
+
+parse_gattrb    label    near
+        inc     esi
+        inc     esi                                ;skip attribute_name_index
+        lods    dword ptr [esi]                    ;get attribute_length
+        bswap   eax                                ;convert it to little-endian
+        add     esi, eax                           ;skip the whole attribute_info
+        loop    parse_gattrb                       ;next attribute_info
+
+parse_next1     label    near
+        pop     ecx
+        loop    parse_ginfo                        ;next field_info
+
+
+Now we are in the most important place, the methods[].  It is a table which
+contain structures (method_info structures), which  might  contain a number
+of attribute_info structures. It is just like fields[]. We are looking  for
+an  attribute_info structure with an attribute_name_index which  contains a
+valid index to an UTF8 string in the constant_pool[]. If the string matches
+"Code", then the structure is a Code_attribute structure.  It  contains the
+Java Bytecode of the method, it describes the stack size, the variables and
+exception  table  information,  and  also contains even more attribute_info
+structures.
+
+To infect the file is very simple.  We append the constant_pool[] inserting
+our constant_pool[] structures, and we can insert a new method structure in
+the methods[] table.   We  must  also  parse  our own Java Bytecode and the
+entries in our constant_pool[] table that contain indices.  If  we insert a
+new  method  then  we need to alter the code of another method to insert an
+invoke to our method.
+
+
+EntryPoint Obscuring
+
+In my virus for Windows 64-bit W64/Haley, I demostrated a new EPO technique
+using the Exception Directory.  We will use the same technique here but for
+Java Class files. :)
+
+My  code  attempts  to  find  the Code_attribute structure that contains an
+exception_table entry in exception_table[].  If one is found then it alters
+the handler_pc field to point to the invoke.   Of course, if  no  exception
+happens our code has little to no chance to execute. But I don't care about
+that.  You  can  force an exception to happen using ACONST_NULL and ATHROW.
+However, you  must  be careful where you choose to write code into  another
+method's code.  A  method  may or may not include other attribute_info that
+describes some pieces of the code and contain pointers to it, then you must
+fix all of them. StackMapTable is a special case, if you add code and don't
+properly update it, the table might be invalid and the Class won't run.  If
+you choose to erase this table, for some methods it would  also cause it to
+leave the Class not working (specially since Class files version 50 require
+it).  Some methods require that table, some others don't, I don't know why.
+
+There are other possible targets for EPO techniques: hijacking methods from
+their   CONSTANT_MethodRef_info   and   CONSTANT_NameAndType_info  in   the 
+constant_pool[] table.  Another very old-school technique would be to parse
+the method's code to find invoke instructions and change the index to point
+to the index of the virus' CONSTANT_MethodRef_info.
+
+Outro
+
+In this document I presented new techniques for the gaining control of the
+execution  (like  a  SEH, Exception Directory hooking in Windows viruses).
+And also presented some other possibilities.  There  are  Java  viruses to
+infect  Class  files (that is, Class to Class infection), there is a  Java
+virus to infect PE32 files, and now there is a W32 (PE32) virus to  infect
+Java Class files.  What about a full W32/Java cross-infector? ;)
+
+
+hh86
+18 September 2013
