@@ -1,0 +1,179 @@
+                            Using CUDA PTX 
+                            for decryption
+                                by hh86
+      
+About Glados
+
+It is my first virus using NVIDIA CUDA capable GPU for decryption.  It is a
+direct  action  file  infector of PE32 exe files in the  current directory,
+overwriting to their reloc data if present in the large section  and enough
+to  hold  the  virus  body.  The infected files become droppers.  It is the
+world's first virus to decrypt code using Parallel Thread Execution code.
+
+
+What is it?
+
+Our journey begins by understading what is CUDA. Here is a good explanation
+in Wikipedia: "CUDA (aka Compute Unified Device Architecture) is a parallel
+computing platform and programming model created by NVIDIA and  implemented
+by  the  graphics  processing  units (GPUs) that they produce.  CUDA  gives
+program developers direct access to the virtual instruction set and  memory
+of the parallel computational elements in CUDA GPUs".
+
+CUDA  introduces  CUDA C/C++ (and  the possibility to extend others such as
+Visual C++)  as  the  primary  high-level  language,  and  an assembly-like
+intermediate language between the machine code that is executed in the  GPU
+and  high-level  language.   The  assembly  language  is  known as Paralell
+Thread Execution, or PTX for short.  PTX  allow  programmers to improve the
+performance  in  critical algorithms while also writing code that is highly
+portable.
+
+
+Back to basics
+
+Let's  think  about  the  source  code  of a program for physics that makes
+calculations using the CUDA GPU. The function that makes the calculation is
+executed in the GPU.    Is  is  compiled  from  a CUDA C source code, which
+contains also the code to initialize the application and prepare the GPU to
+run the function. The function is compiled to PTX, and the PTX code is then
+compiled  and  re-optimised  for  better  performance  in the chosen target
+architecture.
+
+Internally in the compiled program, the compiled PTX is stored as a "cubin"
+file (actually, it is an embedded ELF file).   When  the program starts, it
+passes the  cubin  through the CUDA runtime library or directly to the CUDA
+driver.   Either way, the cubin file is then translated again to run in the
+specific instruction set in the GPU (yes, GPU have various instruction sets
+that can run its multiple cores).
+
+
+Viruses and GPUs
+
+The world's first virus that used the GPGPU for decryption, was W32.OGLe by
+roy g biv. In its analysis Peter Ferrie describes the GPU as: "unimaginable
+challenges   for  anti-malware  emulators, especially  given that there are
+two major execution environments which have quite different behaviours, and
+there is no easy way to determine which one is intended to be used".
+
+CUDA GPU introduce a special challenge.  As  I described, those GPU can run
+code for different targets, and yet I haven't mentioned that it can be made
+to run thousands of cores using thousands of threads, concurrently!  That's
+very scary, for them. ;)
+
+I first learned about PTX code when I was researching to write code  for my
+first  virus  ever.   It's  been  a  long  time since I finally was able to
+purchase  an  NVIDIA graphic card.   I decided to try it myself and wrote a
+simple POC to decrypt the virus using CUDA capable GPUs and PTX.
+
+
+How can we do that
+
+We use the Driver API interface instead of the CUDA Runtime API since there
+is a slight chance that the host system does not have it installed. Firstly
+we call cuInit() API to initialize the driver.   The next task is finding a
+CUDA  capable  device  (the system may have multiple graphic cards and they
+may work concurrently).  We use the cuDeviceCount() API to get the count of
+devices that support CUDA.
+
+If one device is found and matches the configuration require, the next step
+is to create a context (CUcontext) on the device, we call cuCtxCreate() API
+to do that, here  I use CU_CTX_SCHED_BLOCKING_SYNC flag to make synchronous
+calls.
+
+Now we load the module (CUmodule) in order to perform JIT compilation. Just
+use cuModuleLoadDataEx() and then cuModuleGetFunction() to get a  "handler"
+(CUfunction) to call our kernel.  The  module  is  the  source  code  of  a
+function (or numerous functions).
+
+The  device  cannot  work  with  host  memory directly, we need to allocate 
+device memory using cuMemAlloc().  Then  we  copy  the encrypted virus code
+(and in this case, the keys too) using cuMemcpyHtoD().  Then we can proceed
+to launch the decryptor code in the device using cuLaunchKernel().
+
+For a code example of the whole process take a look to  Glados source code.
+
+
+PTX decryptor
+
+It is an RC4 algorithm that uses 128-bit keys.   I ported it from my UNIT00
+virus which was x86 assembler to CUDA PTX.  It looks like this:
+
+        mov.s32           r1, 0;
+
+fill_states:
+        mov.s32           r2, s[r1];
+        st.local.s8 [r2], r1;
+        add.s32           r1, r1, 1;
+        setp.eq.s32       p, r1, 256;
+@!p     bra               fill_states;
+        ld.param.s32      r9, [b];
+        mov.s32           r3, 0;
+        mov.s32           r1, 0;
+
+do_permutation:
+        mov.s32           r5, s[r1];
+        ld.local.s8       r4, [r5];
+        mov.s32           r6, r4;
+        mov.s32           r7, r5;
+        add.s32           r3, r3, r4;
+        rem.s32           r4, r1, 16;
+        add.s32           r5, r9, r4;
+        ld.global.s8      r4, [r5];
+        add.s32           r3, r3, r4;
+        and.b32           r3, r3, 0xff;
+        mov.s32           r5, s[r3];
+        ld.local.s8       r4, [r5];
+        st.local.s8       [r7], r4;
+        st.local.s8       [r5], r6;
+        add.s32           r1, r1, 1;
+        setp.eq.s32       p, r1, 256;
+@!p     bra               do_permutation;
+        mov.s32           r1, 0;
+        mov.s32           r3, 0;
+        mov.s32           r8, 0;
+
+decrypt:
+        add.s32           r1, r1, 1;
+        and.b32           r1, r1, 0xff;
+        mov.s32           r5, s[r1];
+        ld.local.s8       r4, [r5];
+        mov.s32           r6, r4;
+        mov.s32           r7, r5;
+        add.s32           r3, r3, r4;
+        and.b32           r3, r3, 0xff;
+        mov.s32           r5, s[r3];
+        ld.local.s8       r4, [r5];
+        st.local.s8       [r7], r4;
+        st.local.s8       [r5], r6;
+        add.s32           r6, r6, r4;
+        and.b32           r6, r6, 0xff;
+        mov.s32           r5, s[r6];
+        ld.local.s8       r4, [r5];
+        ld.global.s8      r2, [r9+16];
+        xor.b32           r4, r4, r2;
+        st.global.b8      [r9+16], r4;
+        add.s32           r9, r9, 1;
+        add.s32           r8, r8, 1;
+        setp.eq.s32       p, r8, 0000;     //virus size
+@!p     bra               decrypt;
+
+
+Interpretation  of  the  code  should  be pretty straight forward to people
+familiar with x86 instruction set, since I didn't make use of  any  special
+instruction.  With a very few exceptions: "rem" returns the modulo, "ld" is
+like "lods" and "st" is like "stos" instructions, I use "mov"  here  to set
+some values to zero since it uses fewer operands than "xor" (in CUDA PTX it
+is dst, src1, src2) but can be used as "lea" from x86 as well.  The code is
+not optimised, the  algorithm can use fewer instructions and get rid of the
+"local"  and  "global"  then they become generic and the GPU checks in what
+range does the memory pointer falls (but that may make the process slower).
+
+
+Outro
+
+While  the weakness lies in the PTX code itself because it can be retrieved
+and  understood  with  minor efforts, we'll soon change that by introducing
+the GPU machine code whithin the CPU machine code itself.
+
+hh86
+1 November 2013
