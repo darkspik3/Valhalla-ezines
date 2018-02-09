@@ -1,0 +1,66 @@
+Welcome to the Valhalla #2 e-zine and my introduction.
+Before writing this article, i looked a bit over my
+old, buggy sources and the content of other ezines. It seems
+time is running. ;)
+
+I don't know when i started with writing viruses because
+my old dos sources were never released in an e-zine.
+I think it has been around 1997 and 1998 when a friend of mine
+gave me the virus creation laboratory, some vx tutorials and 
+the last words of the mentor on some floppy discs (i could
+not download them by myself because i did not have a modem
+and an internet connection;). I still love the following
+quote from one of these tuorials (dark angels phunky virus 
+writing guide):
+
+"Virii are wondrous creations written for the sole purpose of 
+spreading and destroying the systems of unsuspecting fools. 
+This eliminates the systems of simpletons who can't tell 
+that there is a problem when a 100 byte file suddenly blossoms 
+into a 1,000 byte file. Duh. These low-lifes do not deserve to 
+exist, so it is our sacred duty to wipe their hard drives off 
+the face of the Earth." xD
+
+I found my first win32 virus attempt in Coderz #1
+which was released in november, 2000. Calling it an 
+attempt is the right description: I used APIs like 
+"WinExec()" because "CreateProcess()" needed too 
+many parameters and i did not understand how to 
+use them ;) But anyway, it was still a magic time,
+many active virus authors were hosted on coderz.net and
+visited #virus on undernet (which is now a broken shadow
+of it former self).
+
+Ok, i just recognize that im talking about the good old
+times which is an indicator for getting old ;) But don't
+listen to old suckers who complain that the scene is dead and
+in the past everything was better. Its not true. In the past,
+everybody was copying e.g. one code snippet for calculating the
+delta offset and storing it in the ebp register. Who the hell
+invented this shit? It makes conventional stack frames 
+impossible because they need ebp. 
+
+Even more worse, nowadays some people still believe 
+some old vx turorials which recommend to
+Write every task in assembler because its 1337 and the way to go.
+Sorry but this is so terribly wrong: You always have to use
+the programming language which provides the best, fastest
+and cleanest solution. And this is in 99% of all cases
+NOT assembler. Google for "Master Foo and the Ten Thousand Lines"
+and you will understand.
+
+Compared to the past, many things are better today.
+We have nowadays good pages like vxheavens.com 
+which contain last collections of tutorials and virus history.
+We have so many pages dedicated to programming (which teach you all 
+kind of programming languages and good coding guide lines),
+math, microcontrollers, etc. Furthermore, you can visit more 
+than 200 days/year it-sec conferences. And there are still 
+many people who write articles and code things related to 
+malware. The only difference is that they don't call 
+themselfs "vxers" but "security researchers".
+
+Ok, enough said, enjoy the zine :-)
+
+belial - nullsecurity.net
+

@@ -1,0 +1,21 @@
+-------------------------------------
+First of all, it is a great honor for me to be among those great coders here in
+Valhalla 2. I’d like to give SPTH very deep warm thanks for giving me the
+opportunity to have an article here. I also like to thank hh86 for her awesome
+codes. Moreover, I’d like to thank roy g biv for his valuable contribution that
+enriched the scene. Huge thanks goes to the big genius guys from which I’ve
+learnt the most: Z0mbie, Benny, and The Mental Driller. Last but not least,
+those elites Peter Szor and Peter Ferrie cannot be forgotten and I will always
+thank them.
+
+Finally, that's how I see virus writing:
+
+A virus is not malware  .. it is a genius-ware
+
+Writing a virus is like playing chess with myself, as soon as I create one, I
+immediately think about how to catch it.
+
+See you in Valhalla # 3 with some android codes :)
+
+
+--------------------------
