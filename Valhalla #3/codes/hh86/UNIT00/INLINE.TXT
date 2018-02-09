@@ -1,0 +1,141 @@
+
+                             Inline JScript
+                                For x86
+                              Cryptography
+                                By hh86
+
+About Unit00
+
+I have written a lot of script viruses, and even more machine code viruses.
+In  Valhalla 1,  I  wrote a JScript  that  used  the  .NET Framework to get
+obfuscated  and  compiled into an executable file.  It was the first time I
+put JScript in binary file. However this time I present a new and different
+technique.  This is my first W32 virus to have inline JScript code using it
+for cryptography. I call it W32/Unit00. You get the best of both worlds. ;)
+
+
+MSScript - What is it?
+
+Microsoft's ScriptControl, is  an  ActiveX  control that gives the power to
+applications  to  run  script code pretty much in the same fashion as if it
+was the Windows Script Host.    Except  that  WSH is  not involved here, it
+does  however, shares  the  same DLL that are commonly use to interpret the
+code (jscript.dll, for example).
+
+We must deal with OLE32, which can be tedious and difficult, but having the
+script  and  the  possibility to control it, is a chance that we should not
+let go.
+
+It is also very interesting  approach for extension of  functionality.  The
+ScriptControl offers various methods to help us achieve our goal.
+
+
+How we do it
+
+Scripts  can  be  loaded  using AddCode(sourcecode) method.  Only functions
+(JS/VBS) or subrutines (VBS) should loaded using this method.  However, you
+do  can  load code that is not wrapped into a function/subroutine, but this
+does not return anything that functions/subroutine might return  (there are
+workarounds,  like  loading  an object into the control, if the object have
+properties that accept that information to be assigned, you then can use it
+to transfer data from one context to another).
+
+AddCode  performs  an automatic parse to find syntax mistakes, an exception
+happens if any.
+
+The  official  method  to  run the script is using Run method.  This method
+calls a previously loaded function, so this one does returns data.
+
+We also have Eval, for expressions, and we have ExecuteStatement for single
+code line.
+
+Outputs  from  methods such as Run or Eval are a _variant_t class.   We can
+use Extractors to assist us on the conversion. For strings we will get BSTR
+that you could convert if you want.
+
+
+Eval expressions
+
+Here is a very simple example.  C++ code this time.  :)
+
+CoInitialize(NULL); {
+    MSScriptControl::IScriptControlPtr scriptScriptControl(__uuidof(MSScriptControl::ScriptControl));
+
+    /* set Language property: JScript/VBScript only. default is VBScript, but it fails if you don't set it. */
+    scriptScriptControl->Language = "JScript";
+
+    /* now use Eval method */
+    unsigned long uintOut = (unsigned long)scriptScriptControl->Eval("1 + 1").operator unsigned long();
+}
+CoUninitialize();
+
+
+Xenoglossy
+
+Static  detection  might  work  for some script viruses.  Detection through
+emulation can be hard when it comes to script viruses.   With  both  worlds
+combined, the script code does not need to be very complex.
+
+I use it for decryption.  We load IScriptControl and retrieve its interface
+for setting it up.
+
+When  we use the AddCode code we must send our script  code  formatted as a
+BSTR data string.   Since it is actually a pointer to an Unicode string, it
+is not  necessary  to set  the string length prefix.   We then run the code
+using Run method.
+
+My script code function in Unit00 simply returns Unit00's body encoded (but
+decrypted) as a large string of hexadecimals. The output is also a BSTR, so
+we must convert it back to machine code, and we are done.
+
+
+Tales from the Crypt
+
+The  algorithm  I implement in this code for  encryption/decryption  is the
+RC4.  It is a pretty small algorithm, and very simple.  It was very easy to
+implement in JScript.    I took the pseudocode in Wikipedia's entry for the
+description  and it was pretty straight forward to create the JScript code.
+
+This is how it looks the key-schedule initialisation:
+
+    s = [];
+    for(i = 0; i < 256; i++) {
+        s[i] = i;
+    }
+
+    j = 0;
+
+    for(i = 0; i < 256; i++) {
+        j = (j + s[i] + k[i % k.length]) % 256;
+        t = s[i];
+        s[i] = s[j];
+        s[j] = t;
+    }
+
+And this is the pseudo-random generation algorithm:
+
+    i = 0;
+    j = 0;
+    for(u = 0; u < b.length; u++) {
+        i = (i + 1) % 256;
+        j = (j + s[i]) % 256;
+        t = s[i];
+        s[i] = s[j];
+        s[j] = t;
+        o[u] = (b[u] ^ s[(s[i] + s[j]) % 256]);
+    }
+
+An  implementation  in  x86  code  of the RC4 algorithm is also required to
+encrypt and encode the virus for the first time.
+
+
+No 64-bit
+
+The OCX is only  available for 32-bit applications, no 64-bit official port
+is there for Windows.  Not good even for script files: on 64-bit OS Windows
+default  behavior is run WSH from System32 and not from SysWOW64, therefore
+the object cannot be created.  Switch to SysWOW64 on 64-bit platforms.
+
+hh86
+September 2012
+5f3bc5221626b2f8d66261fb073394{at}gmail.com
