@@ -1,0 +1,169 @@
+
+                              Contents Overview
+
+
+----------------------------------------------------------------[Editorial]
+
+Into Valhalla
+An introduction to the fourth issue of Valhalla by its editor: hh86.
+
+Words From Second Part To Hell
+Words from Second Part To Hell to the readers.
+
+Words From roy g biv
+Words from roy g biv to the readers.
+
+Words From R3s1stanc3
+Words from R3s1stanc3 to the readers.
+
+Words From M0SA
+Words from R3s1stanc3 to the readers.
+
+Words From hh86
+Words from hh86 to the readers.
+
+Contents Overview
+This.
+
+Priest Profile by JPanic
+JPanic  bring  to us the profile of the virus writer Priest and his amazing
+body of work.
+
+Qark Profile by JPanic
+JPanic  bring  to us the profile of the virus writer Qark  and  his amazing
+body of work.
+
+From an admirer in the AV scene
+A researcher from the AV scene and admirer of our work, sent to us an image
+to celebrate with us the release of the fourth issue of Valhalla.
+
+Contact Us!
+Contact information of the people in charge of Valhalla.
+
+
+-----------------------------------------------------------------[Articles]
+
+Infection of biological DNA with digital Computer Code by SPTH
+SPTH  shows  a  method  how  a computer code can infect biological DNA, and 
+thereby    spread    itself   in   the   biological-chemical  world   as  a 
+self-replicating bacterium.
+
+
+Cross Script Infection using MetaLanguages by SPTH
+SPTH  describes  the  use of meta-level lenguages to create cross-scripting
+viruses.  You can see this new technique in action in his new:
+JS/VBS/MatLab/Ruby/Python.Polygamy virus.
+
+
+Quines - theory and practice by roy g biv
+roy g biv describes quines application in virus writing. A technique he has
+implemented to create 32 new viruses.
+
+
+Multi-Platform Viruses Made Easy - A Case Study by JPanic
+JPanic makes a case study of his virus CAPZLOQ TEKNIQ v2.0 and the model of
+abstraction  that  makes  it  a  successful  cross-platform virus infecting
+Linux, OSX and Windows operating systems.
+
+
+Linux x64 Infection for Lamers (by a Lamer) - JPanic 2013
+JPanic  describes  how  to infect 64-bit Linux OS, ELF64 files, and prelink
+executables.  Techniques  he  is  using in his upcoming Linux64.Retaliation
+virus.
+
+
+Combining a mailworm with GPG by R3s1stanc3
+R3s1stac3 describes  a  new technique for spreading worms using GPG that he
+implements in his new virus PL.Cryptos.
+
+
+SYP.01: Bypassing Online Dynamic Analysis Systems by M0SA
+M0SA  describes  new  tricks to evade detection by dynamic analysis systems
+such as sandboxes and online anti-virus scanning.
+
+
+Infecting PE files with Java Bytecode by hh86
+hh86  describes  the  technique  used  in her new Java/Sojourner virus that
+infects PE32 files.
+
+
+Java Class infection from PE32 files by hh86
+hh86  describes  the  new  techniques used in her new W32.Grimes virus that
+infect Java Class files.
+
+
+Using CUDA PTX for decryption by hh86
+hh86  describes  how  to implement decryption algorithms using CUDA capable
+GPUs. You can see this new technique in action in her new W32.GLaDOS virus.
+
+
+GPU powered file infector by hh86
+hh86 describes how to implement CUDA capable GPU to aid in self-replication
+algorithms.   You can see this new technique in action in her W32.GLaDOS (B)
+virus.
+
+--------------------------------------------------------------------[Codes]
+
+Mycoplasma mycoides SPTH-syn1.0 by SPTH
+SPTH  presents  the  source  code of his creation:  the world's first virus
+capable to infect DNA.  No, your eyes are not deceiving you.
+
+
+JS/VBS/MatLab/Ruby/Python.Polygamy by SPTH
+SPTH  presents  the  source  code of his creation:  the world's first virus
+using meta-language for cross-scripting file infection.
+
+
+Quine-based Infectors for 32 different languages by roy g biv
+An  extensive  document  that  presents  32 new viruses members of the Quin
+virus family by roy g biv.
+
+
+CAPZLOQ TEKNIQ v2.0 by JPanic
+JPanic  presents  the  source  code  of a new version of his multi-platform
+virus, now infecting Linux, OSX, and Windows operating systems.
+You can read an analysis of it by Peter Ferrie:
+http://pferrie.host22.com/papers/clapzok.pdf
+
+
+PL.Cryptos
+R3s1stanc3 presents the source code of his creation: the world's worm  that
+spreads using GPG.
+
+
+W32/Ether.A by Black Sun
+Black Sun  presents his new metamorphic virus for Windows 32-bit, featuring
+complex infection techniques.
+
+
+Java.Sojourner by hh86
+hh86 presents the world's first Java Bytecode virus to infect PE32 files.
+
+
+W32.Grimes by hh86
+hh86 presents the world's first W32 virus to infect Java Class files.
+
+
+W32.GLaDOS.A by hh86
+hh86  presents  the  world's first W32 virus to decrypt its code  using PTX
+code in CUDA capable GPUs.
+
+
+W32.GLaDOS.B by hh86
+hh86  presents  the  world's  first  W32  virus to use CUDA capable GPUs to
+infect files.
+
+---------------------------------------------------------------[Interviews]
+
+Interview with roy g biv by hh86 and SPTH
+Here  we  talk with roy g biv, one of the most reliable contributors to the
+virus-writing scene for many years.
+
+Interview with JPanic by hh86 and SPTH
+This  is  an  interview  with  JPanic, an old-school vxer from the 90s, who 
+desided to have his comeback in 2013, which was very successful so far.
+
+Interview with Jeff Dahmer by SPTH
+In this text we talk with Jeff Dahmer for the first time.  He  is  the  new
+administrator  of  VX Heaven, the  biggest  and  best virus-related library
+around.
