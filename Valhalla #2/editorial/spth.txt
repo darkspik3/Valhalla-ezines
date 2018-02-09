@@ -1,0 +1,104 @@
+Hello and welcome to Valhalla 2!!!
+
+Today, exactly 10 years ago, I made my first entry at my blog and had the
+first contact with the vx scene. This is a perfect possibility to say thanks
+for the awesome time to you - and my present to all of you is this nice
+small VX e-zine.
+
+This is now actually the third e-zine of a series:
+- 01.01.2011: virus writing bulletin 2011 - valhalla #0 :-)
+- 05.08.2011: valhalla #1
+- 15.03.2012: valhalla #2
+
+The idea has always been clear: We work as hard as we can, and release small
+beautiful magazines. In my opinion this is much better than holding good stuff
+back that it gets old.
+
+We did not write official call-for-papers, did not officially announce the zine
+anything. It was secret - except for the people who were involved. So instead
+of writing one message at a homepage/forum, we wrote many many (!) mails with
+interested people - thats a nice way imo, having much personal contact.
+
+This magazine has been done by many people:
+
+hh86 - She had the initial idea of making an e-zine, and invited me in the
+       first place - that was in fall of 2010. It has been a very productive
+       and interesting cooperation with her. Thanks for all of that! Hope we
+       can continue this successful way :) After a short vacation, of course ;)
+
+herm1t - So much thanks for all your effort for making this awesome great best
+         Library about computer viruses and hosting us vxers :) And of course,
+         thanks for the fascinating discussions. You're awesome! :)
+
+roy g biv - Thanks for all of your great work last years - so interesting!
+            Ohh, next time when you decide to send some contribution 90mins
+            before the release, please consider a form where I dont have to
+            use bruteforce password search for decryption - this confuses
+            me alot :-o [thx to hh86 for solving this puzzle haha] Thanks
+            for the nice contact over the years, wish you good luck and all
+            the best!!!
+
+mos6581 - I'm very glad we got in touch, interesting to talk to you, thanks
+          for the great contribute. I hope we can keep working together for
+          long time! :)
+
+Peter Kleissner - Thanks for being part! Was very interesting to meet you.
+                  Wish you much luck your trial, hope the public prosecutor
+                  stops being a bitch and starts understand what became clear
+                  to everybody (even the judge).
+
+alcopaul - Thanks for being such a nice person - next time when i'm on the
+           east-coast, we will go for a few beer! :) Sorry that I didnt include
+           your MP3 virus which you released 2h before magazine release, please
+           consider to send your stuff a bit earlier - thanks!
+
+m0sa - I'm surprised that you aren't annoyed by me pushing you to work on
+       various projects :) I'm glad we had all those interesting discussions
+       about security and especially politics - i understand some things much
+       better now.
+
+belial - Thanks for letting me know about this awesome idea - DWARF. You should
+         really work on it, it will be such cool project! Cant wait for the
+         surprized faces of AVers who have no idea about that format :)
+
+Peter Ferrie - Thanks alot for the time you invested to answere all interview
+               questions - became a very interesting document. And now have fun
+               watching us, looking at some of our code, and thinking about
+               what we will do next :)) See you out there!
+
+pr0mix - Thanks for answering the interview questions, very interesting to know
+         a bit more about you. You are a pretty skilled programmer, we should
+         focus and work together alot in near future :)
+
+Wargame - Also thanks for answereing the interview - very interesting. Hope we
+          will see cool new stuff by you soon. Oh, and offtopic: Congratulations
+          that you finally got rid of Berlusconi! :) Arrivederci!
+
+
+
+The future will look like this: We continue working very hard and release
+sub-annual magazines, we dont announce an official date or write some
+call4papers. You want to be part of those magazines, therefore will contact me
+(sperl.thomas@gmail.com) I will tell you what to do :). 
+
+In the end, some clarifications make sense: We detest online criminals who
+spread malware to harm people. We write viruses for fun, because we like to
+learn and develope new technologies, because we consider it as art,
+because we like to think about (semi-)scientific consequences of, ...
+
+
+
+                              [ ][0][ ]
+                              [ ][ ][0]
+                              [0][0][0]
+
+
+
+
+I see the virus writing is alive.
+
+                                                      Second Part To Hell
+                                  www.spth.de.vu / sperl.thomas@gmail.com
+                                                               March 2012
+
+
