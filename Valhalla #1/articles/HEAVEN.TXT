@@ -1,0 +1,251 @@
+                                Heaven's Gate
+                          64-bit code in 32-bit file
+                              roy g biv / defjam
+
+                                 -= defjam =-
+                                  since 1992
+                     bringing you the viruses of tomorrow
+                                    today!
+
+
+Former  DOS/Win16  virus writer, author of several virus  families,  including
+Ginger  (see Coderz #1 zine for terrible buggy example, contact me for  better
+sources  ;),  and Virus Bulletin 9/95 for a description of what   they  called
+Rainbow.   Co-author  of  world's first virus using circular  partition  trick
+(Orsam, coded with Prototype in 1993).  Designer of world's first XMS swapping
+virus  (John Galt, coded by RT Fishel in 1995, only 30 bytes stub, the rest is
+swapped  out).   Author of world's first virus using Thread Local Storage  for
+replication  (Shrug, see Virus Bulletin 6/02 for a description, but they  call
+it Chiton), world's first virus using Visual Basic 5/6 language extensions for
+replication  (OU812), world's first Native executable virus (Chthon),  world's
+first  virus  using process co-operation to prevent termination  (Gemini,  see
+Virus  Bulletin 9/02 for a description), world's first virus using polymorphic
+SMTP  headers (JunkMail, see Virus Bulletin 11/02 for a description),  world's
+first viruses that can convert any data files to infectable objects (Pretext),
+world's  first  32/64-bit  parasitic  EPO .NET  virus  (Croissant,  see  Virus
+Bulletin  11/04  for a description, but they call it Impanate), world's  first
+virus  using  self-executing HTML (JunkHTMaiL, see Virus Bulletin 7/03  for  a
+description), world's first virus for Win64 on Intel Itanium (Shrug, see Virus
+Bulletin 6/04 for a description, but they call it Rugrat), world's first virus
+for  Win64 on AMD AMD64 (Shrug), world's first cross-infecting virus for Intel
+IA32  and  AMD  AMD64  (Shrug),  world's  first  viruses  that  infect  Office
+applications  and  script  files  using the same  code  (Macaroni,  see  Virus
+Bulletin  11/05  for  a description, but they call it Macar),  world's   first
+viruses  that  can infect both VBS and JScript using the same code (ACDC,  see
+Virus  Bulletin 11/05 for a description, but they call it Cada), world's first
+virus  that  can  infect  CHM files (Charm, see Virus  Bulletin  10/06  for  a
+description,  but they call it Chamb), world's first IDA plugin virus  (Hidan,
+see Virus Bulletin 3/07 for a description), world's first viruses that use the
+Microsoft  Script  Encoder  to dynamically encrypt the  virus  body  (Screed),
+world's  first virus for StarOffice and OpenOffice (Starbucks), world's  first
+virus  IDC  virus (ID10TiC), world's first polymorphic virus for Win64 on  AMD
+AMD64  (Boundary, see Virus Bulletin 12/06 for a description, but they call it
+Bounds),  world's first virus that can infect Intel-format and  PowerPC-format
+Mach-O  files  (MachoMan,  see  Virus Bulletin 01/07 for  a  description,  but
+they  call  it  Macarena), world's first virus that uses  Unicode  escapes  to
+dynamically encrypt the virus body, world's first self-executing PIF (Spiffy),
+world's  first  self-executing  LNK (WeakLNK), world's first virus  that  uses
+virtual  code  (Relock),  world's  first virus to use  FSAVE  for  instruction
+reordering  (Mimix), world's first virus for ODbgScript (Volly), world's first
+Hiew   plugin  virus  (Hiewg),  world's  first  virus  that  uses  fake   BOMs
+(Bombastic),  and  world's  first virus that uses JScript  prototypes  to  run
+itself  (Protato).  Author of various retrovirus  articles (eg see Vlad #7 for
+the  strings that make your code invisible to TBScan).  This is my fifth virus
+for  Win64.   It  is  the  world's first virus that  uses  Heaven's  Gate  for
+replication.
+
+
+I found this technique in 2009, and I update it in 2011.
+
+
+What is it?
+
+On 64-bit platform, there is only one ntoskrnl.exe, and it is 64-bit code.  It
+also  uses  a different calling convention (registers, so  called  "fastcall")
+compared  to 32-bit code (stack, so called "stdcall", old name was  "pascal").
+So  how can 32-bit code run on 64-bit platform?  There is "thunking" layer  in
+wow64cpu.dll,  which  saves 32-bit state, converts parameters to 64-bit  form,
+then  runs  "Wow64SystemServiceEx"  in wow64.dll.  But  64-bit  registers  are
+visible  only  in 64-bit mode, so how does wow64cpu.dll work?  Here is what  I
+call Heaven's Gate, but first we must go back to ntdll.dll.
+
+
+Thunking Layer
+
+When  an  important function is called from a DLL like kernel32.dll, it  calls
+into  the  native interface in ntdll.dll.  The native interface  powerful  but
+mostly undocumented layer between user-mode and kernel-mode.  For some detail,
+see my Chthon code in 29A#6.  It used to be that to call into kernel mode, the
+code would do this:
+
+    mov eax, service
+    lea edx, dword ptr [esp + 4]
+    int 2eh
+
+In  Windows  XP,  it became possible to use sysenter instead of int  2eh,  for
+better  performance.  In 64-bit Windows, a "xor ecx, ecx" was added because of
+64-bit pointer size, and the int 2eh was replaced by:
+
+    call dword ptr fs:[0c0h]
+
+and  now  we are one step closer to Heaven's Gate.  The field at fs:[0c0h]  is
+called  WOW32Reserved, and holds an address in wow64cpu.dll.  If we follow the
+call, we reach a jump.  A far jump.  A special far jump.  Heaven's Gate.
+
+
+Heaven's Gate
+
+The  jump  in wow64cpu.dll is a 64-bit gate.  We can jump through it into  the
+world  of  64-bit code: 64-bit address space, 64-bit registers, 64-bit  calls.
+We  might  think that jumping into wow64cpu.dll is useless because  we  cannot
+control  where  it  goes after that, but of course we can change  the  address
+ourself  to  anywhere we like.  We can alter the address inside  wow64cpu.dll,
+we  can  alter the address at fs:[0c0h], or we can just call through the  gate
+on  our  own.  The gate maps the entire 4Gb of memory, and the selector  value
+is  always 33h.  We can switch between the modes easily, too.  All we need  is
+the return address on the stack.  We can switch modes in this long way:
+
+    call to64
+    ;32-bit code continues here
+
+to64:
+    db   0eah ;jmp 33:in64
+    dd   offset in64
+    dw   33h
+
+in64:
+    ;64-bit code goes here
+
+To switch back to 32-bit code can be done this way:
+
+    jmp  fword ptr [offset to32 - offset fr64]
+fr64:
+
+to32:
+    dd   offset in32
+    dw   23h
+
+in32:
+    ret
+
+Once  in  64-bit  mode,  we can only use the  native  interface  in  ntdll.dll
+The  0eah-style  jmp not supported in 64-bit mode, and there are  no  absolute
+memory  addressing  in 64-bit mode.  All addressing is rip-relative, which  is
+why the jmp is relative to the fr64 label.
+
+Of course there's a simpler way, which looks like this:
+
+    db   9ah ;call 33:in64
+    dd   offset in64
+    dw   33h
+    ;32-bit code continues here
+
+in64:
+    ;64-bit code goes here
+
+To switch back to 32-bit code, just use a 32-bit retf.  That's much easier.
+
+
+Finding ntdll.dll
+
+Once  in  64-bit  mode,  we can only use the  native  interface  in  ntdll.dll
+because  the  kernel32.dll in our process memory is 32-bit, and won't  run  in
+64-bit mode.  We can get the base address of ntdll.dll this way:
+
+    push 60h
+    pop  rsi
+    gs:lodsq ;gs not fs
+    mov rax, qword ptr [rax+18h]
+    mov rax, qword ptr [rax+30h]
+    mov rax, qword ptr [rax+10h]
+
+
+Mixing 32-bit and 64-bit
+
+Best  of all, Yasm now allows mixing 32-bit and 64-bit code in the same  file.
+When  I was writing Shrug48 (because half-way between 32-bit and 64-bit), this
+was  not possible, so I had two source  files that had to be built  separately
+and  then concatenated afterwards.  Now with Yasm, we can use "bits 32" before
+the  32-bit code, and "bits 64" before the 64-bit code, anywhere in the  file,
+and we can swap between them as much as we want, like this:
+
+bits 32
+    db   9ah ;call 33:in64
+    dd   offset in64
+    dw   33h
+    ;32-bit code continues here
+
+bits 64
+in64:
+    push 60h
+    pop  rsi
+    gs:lodsq ;gs not fs
+    mov rax, qword [rax+18h]
+    mov rax, qword [rax+30h]
+    mov rax, qword [rax+10h]
+    retf
+
+Another way to jump in a position-independent way is this:
+
+    push cs
+    call to64
+    ;32-bit code continues here
+
+to64:
+    push    0cb0033h ;combined selector 33h and retf
+    call    to64 + 3
+bits64
+    ;now in 64-bit mode
+    ;64-bit code goes here
+    retf ;return to 32-bit mode
+
+
+Current Directory
+
+There  is a separate current directory for 32-bit and 64-bit mode.   Normally,
+the  64-bit current directory is never used, because all 32-bit APIs that work
+with  the  current directory do not switch to 64-bit first.  We can  make  the
+directories  the same by overwriting the 64-bit pointers with the 32-bit ones.
+Of course, we have to find the location for the 64-bit pointers, first. ;)
+
+Even in 32-bit mode, there is a 64-bit Thread Information Block.  It is 0x1000
+after the 32-bit Thread Information Block.  Inside the 64-bit TIB is a pointer
+to the 64-bit RTL_USER_PROCESS_PARAMETERS.  At 0x28 bytes before the structure
+is  the  pointer  to  the current directory that is  used  by  ntdll  function
+RtlDosPathNameToRelativeNtPathName_U.  There are other pointers to the current
+directory, but this is the one that we need.
+
+
+Exceptions
+
+We  can use exceptions in 64-bit mode as usual, but SEH does not exist  there.
+We  must use Vectored Exception Handlers instead.  There is also a small thing
+that  surprised me.  The 64-bit TIB has a context structure for saving  32-bit
+state  during mode switching.  During the switch, the esp slot is zeroed,  and
+restored again afterwards.  This prevents recursive switching from overwriting
+the  context.  This includes when an exception occurs.  When exception occurs,
+no  matter which mode, context is saved, and esp slot is zeroed.  The  problem
+is that when exception returns, esp slot is not restored.  If exception occurs
+in 32-bit mode after that, then application will crash.  So save esp slot from
+TIB (it is at gs:0x1480) if you will use exceptions in 64-bit mode.
+
+
+Closing
+
+Using  the gate is another way to check for 64-bit support, without using  the
+obvious  IsWow64Process API call.  Just place a SEH around the call, and if an
+exception occurs, then you are on a 32-bit platform.  You can also check if gs
+selector is not zero.  This is true only on the 64-bit platform.
+
+64-bit code in 32-bit files.  The ultimate emulator killer. ;)
+
+
+Greets to friendly people (A-Z):
+
+Active - Benny - herm1t - hh86 - izee - jqwerty - Malum - Obleak - Prototype -
+Ratter - Ronin - RT Fishel - sars - SPTH - The Gingerbread Man - Ultras -
+uNdErX - Vallez - Vecna - Whitehead
+
+
+rgb/defjam jun 2009/apr 2011
+iam_rgb@hotmail.com
